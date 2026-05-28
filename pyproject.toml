@@ -1,0 +1,51 @@
+[project]
+name = "clickup-mcp"
+version = "0.1.0"
+description = "ClickUp MCP server + CLI — direct ClickUp REST API v2 wrapper exposed as Model Context Protocol tools."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { file = "LICENSE" }
+authors = [{ name = "Joel Thornton" }]
+dependencies = [
+    "mcp>=1.27",
+    "httpx>=0.27",
+    "typer>=0.12",
+]
+
+[project.scripts]
+clickup-mcp = "clickup_mcp.server:main"
+clickup = "clickup_mcp.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/joelpt/clickup-mcp"
+
+[dependency-groups]
+dev = [
+    "pytest>=8",
+    "ruff>=0.6",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/clickup_mcp"]
+
+[tool.pytest.ini_options]
+testpaths = ["tst"]
+pythonpath = ["."]
+
+[tool.ruff]
+line-length = 100
+src = ["src", "tst"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "D"]
+ignore = ["D203", "D213", "D105", "D107"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.per-file-ignores]
+"tst/*" = ["D100", "D103", "D104"]
