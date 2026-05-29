@@ -1,6 +1,6 @@
 [project]
 name = "clickup-mcp"
-version = "0.1.0"
+version = "2026.05.29.1"
 description = "ClickUp MCP server + CLI — direct ClickUp REST API v2 wrapper exposed as Model Context Protocol tools."
 readme = "README.md"
 requires-python = ">=3.11"
