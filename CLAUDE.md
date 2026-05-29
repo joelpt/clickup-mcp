@@ -19,7 +19,7 @@ A change here that downstream consumers should pick up is a multi-repo operation
 After merging to `main`:
 
 1. Bump `pyproject.toml` `version`, then `git tag vYYYY.MM.DD.N`; push `main` + the tag.
-2. `~/code/claude-plugin-clickup` — repin `.mcp.json` (`clickup-mcp@vYYYY.MM.DD.N`) and bump the plugin's own `version` to match, then its marketplace-sync flow (see that repo's `CLAUDE.md` and `~/.claude/rules/claude-plugins.md`).
+2. `~/code/claude-plugin-clickup` — repin `.mcp.json` to the new release's **commit SHA** (immutable; not the mutable `vYYYY.MM.DD.N` tag — a force-moved tag is a supply-chain regression) and bump the plugin's own `version` to match the CalVer, then its marketplace-sync flow (see that repo's `CLAUDE.md` and `~/.claude/rules/claude-plugins.md`).
 3. `~/code/cclaw` — bump `CLICKUP_MCP_REF` in `bot/Dockerfile` and the fallback default in `bot/entrypoint.sh`, then rebuild the bot image.
 
 The downstream pins must always reference a tag/commit that is **already pushed**, or `uvx` resolution fails for every consumer.
