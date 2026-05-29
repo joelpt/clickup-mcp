@@ -79,6 +79,11 @@ def tasks_search(
     due_before: int | None = typer.Option(None, "--due-before"),
     due_after: int | None = typer.Option(None, "--due-after"),
     page: int = typer.Option(0, "--page"),
+    include_subtasks: bool = typer.Option(
+        True,
+        "--include-subtasks/--no-include-subtasks",
+        help="Include subtasks in the result (default: on).",
+    ),
 ) -> None:
     """Search and filter tasks."""
     _out(
@@ -92,14 +97,22 @@ def tasks_search(
             due_before=due_before,
             due_after=due_after,
             page=page,
+            include_subtasks=include_subtasks,
         )
     )
 
 
 @tasks_app.command("get")
-def tasks_get(task_id: str = typer.Argument(...)) -> None:
+def tasks_get(
+    task_id: str = typer.Argument(...),
+    include_subtasks: bool = typer.Option(
+        True,
+        "--include-subtasks/--no-include-subtasks",
+        help="Include subtasks in the result (default: on).",
+    ),
+) -> None:
     """Get full details of a task by id."""
-    _out(ClickUpClient.from_env().get_task(task_id))
+    _out(ClickUpClient.from_env().get_task(task_id, include_subtasks=include_subtasks))
 
 
 @tasks_app.command("create")

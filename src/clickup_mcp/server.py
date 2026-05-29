@@ -70,8 +70,14 @@ def search_tasks(
     due_before: int | None = None,
     due_after: int | None = None,
     page: int = 0,
+    include_subtasks: bool = True,
 ) -> str:
     """Search/filter tasks. With `query`, filters task names client-side (up to 500 tasks).
+
+    Subtasks are included as their own top-level rows by default, so a `query` will also
+    match subtask names. Pass `include_subtasks=False` to search only top-level tasks —
+    useful when you want a clean list of parent tasks, or when many subtasks would
+    otherwise crowd out top-level matches against the 500-task cap.
 
     Returns `{"tasks": [...], "has_more": bool}`.
     """
@@ -86,14 +92,21 @@ def search_tasks(
             due_before=due_before,
             due_after=due_after,
             page=page,
+            include_subtasks=include_subtasks,
         )
     )
 
 
 @mcp.tool()
-def get_task(task_id: str) -> str:
-    """Get full details of a task by id."""
-    return _dump(_api().get_task(task_id))
+def get_task(task_id: str, include_subtasks: bool = True) -> str:
+    """Get full details of a task by id.
+
+    By default the response includes the task's subtasks under a `subtasks` array, so a
+    single call shows the whole subtask tree. Pass `include_subtasks=False` when you only
+    need the parent task's own fields (e.g. just its description, status, or assignees)
+    and the subtasks would be noise.
+    """
+    return _dump(_api().get_task(task_id, include_subtasks=include_subtasks))
 
 
 @mcp.tool()

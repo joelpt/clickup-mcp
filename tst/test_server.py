@@ -44,3 +44,29 @@ def test_tool_delegates_to_client(monkeypatch: pytest.MonkeyPatch) -> None:
     assert calls["args"][0] == "L1"
     assert calls["args"][1] == "Beans"
     assert calls["args"][2]["priority"] == 2
+
+
+def test_get_task_includes_subtasks_by_default(monkeypatch: pytest.MonkeyPatch) -> None:
+    calls: dict[str, Any] = {}
+
+    class FakeClient:
+        def get_task(self, task_id: str, **kwargs: Any) -> dict[str, Any]:
+            calls["kwargs"] = kwargs
+            return {"id": task_id}
+
+    monkeypatch.setattr(server, "_client", FakeClient())
+    server.get_task("t1")
+    assert calls["kwargs"] == {"include_subtasks": True}
+
+
+def test_search_tasks_can_opt_out_of_subtasks(monkeypatch: pytest.MonkeyPatch) -> None:
+    calls: dict[str, Any] = {}
+
+    class FakeClient:
+        def search_tasks(self, query: str | None, **kwargs: Any) -> dict[str, Any]:
+            calls["kwargs"] = kwargs
+            return {"tasks": [], "has_more": False}
+
+    monkeypatch.setattr(server, "_client", FakeClient())
+    server.search_tasks(include_subtasks=False)
+    assert calls["kwargs"]["include_subtasks"] is False

@@ -212,6 +212,7 @@ class ClickUpClient:
         due_before: int | None = None,
         due_after: int | None = None,
         page: int = 0,
+        include_subtasks: bool = True,
     ) -> dict[str, JsonValue]:
         """Search and filter tasks.
 
@@ -219,10 +220,18 @@ class ClickUpClient:
         (ClickUp v2 has no server-side text search). Without ``query``: returns one
         server-filtered page; inspect ``has_more`` and use ``page`` to paginate.
 
+        ``include_subtasks`` (default True) returns subtasks as their own top-level rows.
+        They count against the 500-task ``query`` cap, so on a workspace with many subtasks
+        they can crowd out top-level matches; pass False to search only top-level tasks.
+
         Returns:
             ``{"tasks": [...], "has_more": bool}``.
         """
         params: dict[str, object] = {}
+        # The list/team task endpoints spell this flag "subtasks"; get_task spells it
+        # "include_subtasks". Do not unify — they are distinct ClickUp API parameters.
+        if include_subtasks:
+            params["subtasks"] = "true"
         if status:
             params["statuses"] = status
         if assignee:
@@ -260,9 +269,17 @@ class ClickUpClient:
         tasks = _page(page)
         return {"tasks": tasks, "has_more": len(tasks) == _PAGE_SIZE}
 
-    def get_task(self, task_id: str) -> JsonValue:
-        """Get full details of a task by id."""
-        return self._request("GET", f"/task/{task_id}")
+    def get_task(self, task_id: str, *, include_subtasks: bool = True) -> JsonValue:
+        """Get full details of a task by id.
+
+        Args:
+            task_id: The task id.
+            include_subtasks: Attach the task's subtasks as a ``subtasks`` array when True
+                (the default). Pass False when only the parent task's own fields are needed.
+        """
+        # "include_subtasks" here vs. "subtasks" on the search endpoints — see search_tasks.
+        params = {"include_subtasks": "true"} if include_subtasks else None
+        return self._request("GET", f"/task/{task_id}", params=params)
 
     def create_task(
         self,

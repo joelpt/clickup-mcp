@@ -91,9 +91,7 @@ def test_create_task_builds_body() -> None:
         captured.update(json.loads(req.content))
         return _json({"id": "task1"})
 
-    result = make_client(handler).create_task(
-        "L1", "Beans", priority=2, assignees=[123, 456]
-    )
+    result = make_client(handler).create_task("L1", "Beans", priority=2, assignees=[123, 456])
     assert result == {"id": "task1"}
     assert captured == {"name": "Beans", "priority": 2, "assignees": [123, 456]}
 
@@ -104,6 +102,39 @@ def test_search_tasks_client_side_filter() -> None:
 
     out = make_client(handler).search_tasks("BEAN")
     assert out == {"tasks": [{"name": "fix beans"}], "has_more": False}
+
+
+def test_search_tasks_includes_subtasks_by_default() -> None:
+    def handler(req: httpx.Request) -> httpx.Response:
+        assert req.url.params.get("subtasks") == "true"
+        return _json({"tasks": []})
+
+    make_client(handler).search_tasks()
+
+
+def test_search_tasks_can_exclude_subtasks() -> None:
+    def handler(req: httpx.Request) -> httpx.Response:
+        assert "subtasks" not in req.url.params
+        return _json({"tasks": []})
+
+    make_client(handler).search_tasks(include_subtasks=False)
+
+
+def test_get_task_includes_subtasks_by_default() -> None:
+    def handler(req: httpx.Request) -> httpx.Response:
+        assert req.url.path == "/api/v2/task/t1"
+        assert req.url.params.get("include_subtasks") == "true"
+        return _json({"id": "t1", "subtasks": []})
+
+    assert make_client(handler).get_task("t1") == {"id": "t1", "subtasks": []}
+
+
+def test_get_task_can_exclude_subtasks() -> None:
+    def handler(req: httpx.Request) -> httpx.Response:
+        assert "include_subtasks" not in req.url.params
+        return _json({"id": "t1"})
+
+    make_client(handler).get_task("t1", include_subtasks=False)
 
 
 def test_delete_task_returns_marker() -> None:
