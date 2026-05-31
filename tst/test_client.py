@@ -151,3 +151,66 @@ def test_list_lists_requires_a_scope() -> None:
 
     with pytest.raises(ValueError, match="space_id or folder_id"):
         make_client(handler).list_lists()
+
+
+# --- dropdown custom-field resolution ---
+
+_DROPDOWN_FIELD_TEMPLATE: dict = {
+    "id": "cf1",
+    "name": "Project/Workstream",
+    "type": "drop_down",
+    "type_config": {
+        "options": [
+            {"orderindex": 0, "name": "Product Development", "id": "opt0"},
+            {"orderindex": 1, "name": "Company Governance", "id": "opt1"},
+        ]
+    },
+}
+
+
+def test_dropdown_orderindex_zero_resolves_to_label_get_task() -> None:
+    """value:0 must resolve to the first option's name, not be treated as unset."""
+    field = {**_DROPDOWN_FIELD_TEMPLATE, "value": 0}
+
+    def handler(_req: httpx.Request) -> httpx.Response:
+        return _json({"id": "t1", "custom_fields": [field]})
+
+    result = make_client(handler).get_task("t1", include_subtasks=False)
+    assert isinstance(result, dict)
+    assert result["custom_fields"][0]["value"] == "Product Development"
+
+
+def test_dropdown_nonzero_orderindex_resolves_to_label_get_task() -> None:
+    field = {**_DROPDOWN_FIELD_TEMPLATE, "value": 1}
+
+    def handler(_req: httpx.Request) -> httpx.Response:
+        return _json({"id": "t1", "custom_fields": [field]})
+
+    result = make_client(handler).get_task("t1", include_subtasks=False)
+    assert isinstance(result, dict)
+    assert result["custom_fields"][0]["value"] == "Company Governance"
+
+
+def test_dropdown_null_value_stays_none_get_task() -> None:
+    field = {**_DROPDOWN_FIELD_TEMPLATE, "value": None}
+
+    def handler(_req: httpx.Request) -> httpx.Response:
+        return _json({"id": "t1", "custom_fields": [field]})
+
+    result = make_client(handler).get_task("t1", include_subtasks=False)
+    assert isinstance(result, dict)
+    assert result["custom_fields"][0]["value"] is None
+
+
+def test_dropdown_orderindex_zero_resolves_in_search_tasks() -> None:
+    """Dropdown resolution must also apply to tasks returned by search_tasks."""
+    field = {**_DROPDOWN_FIELD_TEMPLATE, "value": 0}
+
+    def handler(_req: httpx.Request) -> httpx.Response:
+        return _json({"tasks": [{"id": "t1", "name": "VTT SOW 1", "custom_fields": [field]}]})
+
+    result = make_client(handler).search_tasks()
+    assert isinstance(result, dict)
+    tasks = result["tasks"]
+    assert len(tasks) == 1
+    assert tasks[0]["custom_fields"][0]["value"] == "Product Development"  # type: ignore[index]

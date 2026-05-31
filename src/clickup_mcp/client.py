@@ -264,9 +264,13 @@ class ClickUpClient:
             matched: list[JsonValue] = [
                 t for t in collected if isinstance(t, dict) and q in str(t.get("name", "")).lower()
             ]
+            for t in matched:
+                _resolve_dropdown_fields(t)
             return {"tasks": matched, "has_more": capped}
 
         tasks = _page(page)
+        for t in tasks:
+            _resolve_dropdown_fields(t)
         return {"tasks": tasks, "has_more": len(tasks) == _PAGE_SIZE}
 
     def get_task(self, task_id: str, *, include_subtasks: bool = True) -> JsonValue:
@@ -279,7 +283,9 @@ class ClickUpClient:
         """
         # "include_subtasks" here vs. "subtasks" on the search endpoints — see search_tasks.
         params = {"include_subtasks": "true"} if include_subtasks else None
-        return self._request("GET", f"/task/{task_id}", params=params)
+        task = self._request("GET", f"/task/{task_id}", params=params)
+        _resolve_dropdown_fields(task)
+        return task
 
     def create_task(
         self,
@@ -372,6 +378,40 @@ class ClickUpClient:
             f"/task/{task_id}/comment",
             json={"comment_text": text, "notify_all": notify_all},
         )
+
+
+def _resolve_dropdown_fields(task: JsonValue) -> None:
+    """Resolve drop_down custom-field integer orderindex values to option-name strings in-place.
+
+    ClickUp returns ``"value": 0`` when the first dropdown option (orderindex 0) is selected and
+    ``"value": null`` when nothing is selected.  Because 0 is falsy in Python (and JS), any code
+    that checks ``if value:`` treats a zeroth-option selection identically to an unset field.
+    This helper converts the raw integer to the human-readable option name so callers always see
+    a string label or None, never a bare integer.
+    """
+    if not isinstance(task, dict):
+        return
+    custom_fields = task.get("custom_fields")
+    if not isinstance(custom_fields, list):
+        return
+    for field in custom_fields:
+        if not isinstance(field, dict) or field.get("type") != "drop_down":
+            continue
+        value = field.get("value")
+        if value is None:
+            continue
+        type_config = field.get("type_config")
+        if not isinstance(type_config, dict):
+            continue
+        options = type_config.get("options")
+        if not isinstance(options, list):
+            continue
+        match = next(
+            (opt for opt in options if isinstance(opt, dict) and opt.get("orderindex") == value),
+            None,
+        )
+        if match is not None:
+            field["value"] = match.get("name")
 
 
 def _read_secret_file(path: str) -> str:
