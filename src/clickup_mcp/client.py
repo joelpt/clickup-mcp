@@ -297,6 +297,7 @@ class ClickUpClient:
         priority: int | None = None,
         assignees: list[int] | None = None,
         due_date: int | None = None,
+        parent: str | None = None,
     ) -> JsonValue:
         """Create a task in a list.
 
@@ -308,6 +309,8 @@ class ClickUpClient:
             priority: Optional priority (1=urgent, 2=high, 3=normal, 4=low).
             assignees: Optional list of numeric user ids.
             due_date: Optional due date as a Unix ms timestamp.
+            parent: Optional id of an existing task; when set, the new task is created as a
+                subtask of that task. The parent must live in the same list (``list_id``).
         """
         body: dict[str, object] = {"name": name}
         if description is not None:
@@ -320,6 +323,8 @@ class ClickUpClient:
             body["assignees"] = assignees
         if due_date is not None:
             body["due_date"] = due_date
+        if parent is not None:
+            body["parent"] = parent
         return self._request("POST", f"/list/{list_id}/task", json=body)
 
     def update_task(
@@ -378,6 +383,66 @@ class ClickUpClient:
             f"/task/{task_id}/comment",
             json={"comment_text": text, "notify_all": notify_all},
         )
+
+    def list_custom_fields(
+        self,
+        *,
+        list_id: str | None = None,
+        folder_id: str | None = None,
+        space_id: str | None = None,
+        workspace_id: str | None = None,
+        workspace_name: str | None = None,
+    ) -> list[JsonValue]:
+        """List the custom fields accessible at one hierarchy scope.
+
+        Provide one scope. The scopes are **not** hierarchical: each endpoint returns only
+        the fields *defined at that level*. A field created on a list is not returned by the
+        folder/space/workspace query, and vice versa — so to find the field that applies to a
+        given task, query the list the task lives in (or inspect ``get_task``'s
+        ``custom_fields``). For a ``drop_down`` field, the selectable options (each with its
+        ``id`` and ``name``) are under ``type_config.options``; those option ids are what
+        :meth:`set_custom_field_value` expects.
+
+        Args:
+            list_id: List scope.
+            folder_id: Folder scope.
+            space_id: Space scope.
+            workspace_id: Workspace (team) scope, by id.
+            workspace_name: Workspace (team) scope, by name.
+
+        Returns:
+            The list of custom-field definitions at the chosen scope.
+
+        Raises:
+            ValueError: If none of the list/folder/space scopes is given and no workspace
+                resolves (no ``workspace_id``/``workspace_name`` and no ``CLICKUP_TEAM_ID``).
+        """
+        if list_id:
+            path = f"/list/{list_id}/field"
+        elif folder_id:
+            path = f"/folder/{folder_id}/field"
+        elif space_id:
+            path = f"/space/{space_id}/field"
+        else:
+            team = self._resolve_team(workspace_id, workspace_name)
+            path = f"/team/{team}/field"
+        result = self._field(self._request("GET", path), "fields")
+        return result if isinstance(result, list) else []
+
+    def set_custom_field_value(
+        self, task_id: str, field_id: str, value: str | int | float | bool | list[str]
+    ) -> JsonValue:
+        """Set a custom field's value on a task.
+
+        Args:
+            task_id: Target task id.
+            field_id: The custom field's UUID (from :meth:`list_custom_fields` or ``get_task``).
+            value: The new value, shaped per the field type. For a ``drop_down`` field this
+                is the chosen option's UUID ``id`` (ClickUp also accepts the option's integer
+                ``orderindex``); for text/url/email/phone a string; for number/money a number;
+                for date a Unix ms timestamp.
+        """
+        return self._request("POST", f"/task/{task_id}/field/{field_id}", json={"value": value})
 
 
 def _resolve_dropdown_fields(task: JsonValue) -> None:

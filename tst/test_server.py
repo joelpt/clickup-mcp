@@ -22,6 +22,8 @@ EXPECTED_TOOLS = {
     "delete_task",
     "list_comments",
     "add_comment",
+    "list_custom_fields",
+    "set_custom_field_value",
 }
 
 

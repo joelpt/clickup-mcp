@@ -118,8 +118,13 @@ def create_task(
     priority: int | None = None,
     assignees: list[int] | None = None,
     due_date: int | None = None,
+    parent: str | None = None,
 ) -> str:
-    """Create a task in a list. priority: 1=urgent 2=high 3=normal 4=low; due_date: Unix ms."""
+    """Create a task in a list. priority: 1=urgent 2=high 3=normal 4=low; due_date: Unix ms.
+
+    Set `parent` to an existing task id to create the new task as a subtask of it (the
+    parent must be in the same `list_id`).
+    """
     return _dump(
         _api().create_task(
             list_id,
@@ -129,6 +134,7 @@ def create_task(
             priority=priority,
             assignees=assignees,
             due_date=due_date,
+            parent=parent,
         )
     )
 
@@ -175,6 +181,49 @@ def list_comments(task_id: str) -> str:
 def add_comment(task_id: str, text: str, notify_all: bool = False) -> str:
     """Post a comment on a task; set notify_all to notify all task watchers."""
     return _dump(_api().add_comment(task_id, text, notify_all=notify_all))
+
+
+@mcp.tool()
+def list_custom_fields(
+    list_id: str | None = None,
+    folder_id: str | None = None,
+    space_id: str | None = None,
+    workspace_id: str | None = None,
+    workspace_name: str | None = None,
+) -> str:
+    """List custom fields at one scope (list/folder/space/workspace).
+
+    Provide one of list_id/folder_id/space_id; with none given, the configured workspace
+    (CLICKUP_TEAM_ID) or an explicit workspace_id/workspace_name is used.
+    Scopes are NOT hierarchical: each returns only fields defined at that level, so to find
+    a task's field, query the list it lives in. For a `drop_down` field, the selectable
+    options (each with `id` and `name`) are under `type_config.options`; pass an option's
+    `id` to `set_custom_field_value`. ClickUp's API cannot create or edit these options —
+    that is UI-only.
+    """
+    return _dump(
+        _api().list_custom_fields(
+            list_id=list_id,
+            folder_id=folder_id,
+            space_id=space_id,
+            workspace_id=workspace_id,
+            workspace_name=workspace_name,
+        )
+    )
+
+
+@mcp.tool()
+def set_custom_field_value(
+    task_id: str, field_id: str, value: str | int | float | bool | list[str]
+) -> str:
+    """Set a custom field's value on a task.
+
+    `field_id` is the field's UUID (from `list_custom_fields` or `get_task`). For a
+    `drop_down` field, `value` is the chosen option's UUID `id` (the integer `orderindex`
+    also works); for text/url/email/phone a string; for number/money a number; for date a
+    Unix ms timestamp; for a labels field a list of option ids.
+    """
+    return _dump(_api().set_custom_field_value(task_id, field_id, value))
 
 
 def main() -> None:

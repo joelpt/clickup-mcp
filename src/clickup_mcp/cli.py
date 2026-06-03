@@ -16,8 +16,10 @@ from clickup_mcp.client import ClickUpClient, JsonValue
 app = typer.Typer(no_args_is_help=True, help="ClickUp REST API v2 CLI.")
 tasks_app = typer.Typer(no_args_is_help=True, help="Task CRUD and search")
 comments_app = typer.Typer(no_args_is_help=True, help="Task comments")
+fields_app = typer.Typer(no_args_is_help=True, help="Custom fields")
 app.add_typer(tasks_app, name="tasks")
 app.add_typer(comments_app, name="comments")
+app.add_typer(fields_app, name="fields")
 
 
 def _out(data: JsonValue) -> None:
@@ -32,6 +34,29 @@ def _ids(raw: str | None) -> list[int] | None:
         return [int(part.strip()) for part in raw.split(",")]
     except ValueError as exc:
         raise ValueError("user ids must be comma-separated integers (e.g. 123,456)") from exc
+
+
+def _value(raw: str) -> str | int | float | bool | list[str]:
+    """Parse a CLI custom-field value: a JSON scalar/string-list if it parses, else the raw string.
+
+    A dropdown option UUID or any plain word is not valid JSON and returns unchanged. A value
+    that *does* parse as JSON but is not a supported field shape — an object, ``null``, or a list
+    with non-string items — raises rather than silently sending the wrong thing to the API.
+
+    Raises:
+        ValueError: If ``raw`` parses as JSON but is not a string, number, boolean, or string list.
+    """
+    try:
+        parsed = json.loads(raw)
+    except ValueError:
+        return raw
+    if isinstance(parsed, bool | int | float | str):
+        return parsed
+    if isinstance(parsed, list) and all(isinstance(item, str) for item in parsed):
+        return parsed
+    raise ValueError(
+        f"unsupported --value {raw!r}: pass a string, number, boolean, or list of strings"
+    )
 
 
 @app.command()
@@ -124,6 +149,7 @@ def tasks_create(
     priority: int | None = typer.Option(None, "--priority"),
     assignees: str | None = typer.Option(None, "--assignees"),
     due_date: int | None = typer.Option(None, "--due-date"),
+    parent: str | None = typer.Option(None, "--parent", help="Parent task id (creates a subtask)."),
 ) -> None:
     """Create a task in a list."""
     _out(
@@ -135,6 +161,7 @@ def tasks_create(
             priority=priority,
             assignees=_ids(assignees),
             due_date=due_date,
+            parent=parent,
         )
     )
 
@@ -185,6 +212,40 @@ def comments_create(
 ) -> None:
     """Post a comment on a task."""
     _out(ClickUpClient.from_env().add_comment(task_id, text, notify_all=notify_all))
+
+
+@fields_app.command("list")
+def fields_list(
+    list_id: str | None = typer.Option(None, "--list-id"),
+    folder_id: str | None = typer.Option(None, "--folder-id"),
+    space_id: str | None = typer.Option(None, "--space-id"),
+    workspace_id: str | None = typer.Option(None, "--workspace-id", "-w"),
+    workspace_name: str | None = typer.Option(None, "--workspace-name"),
+) -> None:
+    """List custom fields at one scope (list/folder/space/workspace are not hierarchical)."""
+    _out(
+        ClickUpClient.from_env().list_custom_fields(
+            list_id=list_id,
+            folder_id=folder_id,
+            space_id=space_id,
+            workspace_id=workspace_id,
+            workspace_name=workspace_name,
+        )
+    )
+
+
+@fields_app.command("set")
+def fields_set(
+    task_id: str = typer.Argument(...),
+    field_id: str = typer.Option(..., "--field-id", "-f"),
+    value: str = typer.Option(..., "--value", help="Dropdown option UUID, or JSON for other types"),
+) -> None:
+    """Set a custom field value on a task.
+
+    For a dropdown, pass the option's UUID id. `--value` is parsed as JSON when possible
+    (so `42`, `1.5`, `["id1","id2"]` work), falling back to the raw string otherwise.
+    """
+    _out(ClickUpClient.from_env().set_custom_field_value(task_id, field_id, _value(value)))
 
 
 def main() -> None:

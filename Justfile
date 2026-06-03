@@ -23,7 +23,7 @@ smoke:
     echo "[smoke] tests"
     uv run pytest -q
     echo "[smoke] tool registration"
-    uv run python -c "import asyncio; from clickup_mcp import server; n=len(asyncio.run(server.mcp.list_tools())); print(f'  {n} tools'); assert n == 11"
+    uv run python -c "import asyncio; from clickup_mcp import server; n=len(asyncio.run(server.mcp.list_tools())); print(f'  {n} tools'); assert n == 13"
     if [[ -n "${CLICKUP_API_KEY:-}" || -n "${CLICKUP_API_KEY_FILE:-}" ]]; then
         echo "[smoke] live: clickup workspaces"
         uv run clickup workspaces | head -c 400; echo

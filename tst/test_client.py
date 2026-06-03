@@ -96,6 +96,76 @@ def test_create_task_builds_body() -> None:
     assert captured == {"name": "Beans", "priority": 2, "assignees": [123, 456]}
 
 
+def test_create_task_sets_parent_for_subtask() -> None:
+    captured: dict[str, object] = {}
+
+    def handler(req: httpx.Request) -> httpx.Response:
+        assert req.url.path == "/api/v2/list/L1/task"
+        captured.update(json.loads(req.content))
+        return _json({"id": "sub1"})
+
+    make_client(handler).create_task("L1", "Sub", parent="parent1")
+    assert captured == {"name": "Sub", "parent": "parent1"}
+
+
+def test_create_task_omits_parent_when_absent() -> None:
+    captured: dict[str, object] = {}
+
+    def handler(req: httpx.Request) -> httpx.Response:
+        captured.update(json.loads(req.content))
+        return _json({"id": "t1"})
+
+    make_client(handler).create_task("L1", "Top")
+    assert "parent" not in captured
+
+
+def test_list_custom_fields_for_list() -> None:
+    field = {"id": "cf1", "name": "Stage", "type": "drop_down"}
+
+    def handler(req: httpx.Request) -> httpx.Response:
+        assert req.url.path == "/api/v2/list/L1/field"
+        return _json({"fields": [field]})
+
+    assert make_client(handler).list_custom_fields(list_id="L1") == [field]
+
+
+def test_list_custom_fields_for_workspace_resolves_team() -> None:
+    def handler(req: httpx.Request) -> httpx.Response:
+        assert req.url.path == "/api/v2/team/team1/field"
+        return _json({"fields": []})
+
+    assert make_client(handler).list_custom_fields(workspace_id="team1") == []
+
+
+def test_list_custom_fields_defaults_to_configured_workspace() -> None:
+    def handler(req: httpx.Request) -> httpx.Response:
+        assert req.url.path == "/api/v2/team/team1/field"
+        return _json({"fields": []})
+
+    assert make_client(handler).list_custom_fields() == []
+
+
+def test_list_custom_fields_no_scope_and_no_default_team_raises() -> None:
+    def handler(_req: httpx.Request) -> httpx.Response:
+        return _json({"fields": []})
+
+    with pytest.raises(ValueError, match="no workspace"):
+        make_client(handler, team_id=None).list_custom_fields()
+
+
+def test_set_custom_field_value_posts_value() -> None:
+    captured: dict[str, object] = {}
+
+    def handler(req: httpx.Request) -> httpx.Response:
+        assert req.method == "POST"
+        assert req.url.path == "/api/v2/task/t1/field/cf1"
+        captured.update(json.loads(req.content))
+        return _json({"id": "t1"})
+
+    make_client(handler).set_custom_field_value("t1", "cf1", "option-uuid-9")
+    assert captured == {"value": "option-uuid-9"}
+
+
 def test_search_tasks_client_side_filter() -> None:
     def handler(req: httpx.Request) -> httpx.Response:
         return _json({"tasks": [{"name": "fix beans"}, {"name": "buy milk"}]})
