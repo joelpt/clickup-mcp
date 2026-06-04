@@ -77,6 +77,7 @@ def search_tasks(
     due_after: int | None = None,
     page: int = 0,
     include_subtasks: bool = True,
+    include_closed: bool = False,
 ) -> str:
     """Search/filter tasks. With `query`, filters task names client-side (up to 500 tasks).
 
@@ -84,6 +85,11 @@ def search_tasks(
     match subtask names. Pass `include_subtasks=False` to search only top-level tasks —
     useful when you want a clean list of parent tasks, or when many subtasks would
     otherwise crowd out top-level matches against the 500-task cap.
+
+    Closed/completed tasks are excluded by default. Pass `include_closed=True` to surface
+    them in an unfiltered search (the clean path for a full audit), or pass a `status`
+    naming a closed-type status (e.g. `"done"`) to filter directly to them — an explicit
+    status filter returns closed tasks even without `include_closed`.
 
     Returns `{"tasks": [...], "has_more": bool}`.
     """
@@ -99,6 +105,7 @@ def search_tasks(
             due_after=due_after,
             page=page,
             include_subtasks=include_subtasks,
+            include_closed=include_closed,
         )
     )
 

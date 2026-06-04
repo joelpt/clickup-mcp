@@ -211,6 +211,33 @@ def test_search_tasks_can_exclude_subtasks() -> None:
     make_client(handler).search_tasks(include_subtasks=False)
 
 
+def test_search_tasks_status_uses_array_bracket_notation() -> None:
+    """ClickUp rejects a scalar ``statuses`` (PUBAPITASK_014); it must be ``statuses[]``."""
+
+    def handler(req: httpx.Request) -> httpx.Response:
+        assert req.url.params.get("statuses[]") == "done"
+        assert "statuses" not in [k for k in req.url.params if k != "statuses[]"]
+        return _json({"tasks": []})
+
+    make_client(handler).search_tasks(status="done")
+
+
+def test_search_tasks_excludes_closed_by_default() -> None:
+    def handler(req: httpx.Request) -> httpx.Response:
+        assert "include_closed" not in req.url.params
+        return _json({"tasks": []})
+
+    make_client(handler).search_tasks()
+
+
+def test_search_tasks_can_include_closed() -> None:
+    def handler(req: httpx.Request) -> httpx.Response:
+        assert req.url.params.get("include_closed") == "true"
+        return _json({"tasks": []})
+
+    make_client(handler).search_tasks(include_closed=True)
+
+
 def test_get_task_includes_subtasks_by_default() -> None:
     def handler(req: httpx.Request) -> httpx.Response:
         assert req.url.path == "/api/v2/task/t1"

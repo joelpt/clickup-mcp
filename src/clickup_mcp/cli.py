@@ -135,6 +135,11 @@ def tasks_search(
         "--include-subtasks/--no-include-subtasks",
         help="Include subtasks in the result (default: on).",
     ),
+    include_closed: bool = typer.Option(
+        False,
+        "--include-closed/--no-include-closed",
+        help="Include closed/completed tasks (default: off).",
+    ),
 ) -> None:
     """Search and filter tasks."""
     _out(
@@ -149,6 +154,7 @@ def tasks_search(
             due_after=due_after,
             page=page,
             include_subtasks=include_subtasks,
+            include_closed=include_closed,
         )
     )
 

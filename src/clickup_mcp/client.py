@@ -274,6 +274,7 @@ class ClickUpClient:
         due_after: int | None = None,
         page: int = 0,
         include_subtasks: bool = True,
+        include_closed: bool = False,
     ) -> dict[str, JsonValue]:
         """Search and filter tasks.
 
@@ -285,6 +286,25 @@ class ClickUpClient:
         They count against the 500-task ``query`` cap, so on a workspace with many subtasks
         they can crowd out top-level matches; pass False to search only top-level tasks.
 
+        Closed/completed tasks are excluded by default. There are two ways to surface them:
+        pass ``include_closed=True`` to add them to an otherwise-unfiltered search, or pass a
+        ``status`` naming a closed-type status (e.g. ``"done"``) — an explicit status filter
+        returns matching closed tasks even without ``include_closed``. Use ``include_closed``
+        for full audits where the exact closed-status names are unknown.
+
+        Args:
+            query: Optional name substring; filters client-side over up to 500 tasks.
+            workspace_id: Explicit workspace id (used when ``list_id`` is omitted).
+            workspace_name: Workspace name to resolve (used when ``list_id`` is omitted).
+            list_id: Restrict to a single list; bypasses workspace resolution.
+            status: Filter to a single status name (sent as the ``statuses[]`` array param).
+            assignee: Filter to a single assignee id.
+            due_before: Upper bound on due date (epoch ms).
+            due_after: Lower bound on due date (epoch ms).
+            page: Zero-based page index for the no-``query`` path.
+            include_subtasks: Return subtasks as their own top-level rows when True.
+            include_closed: Include closed/completed tasks when True.
+
         Returns:
             ``{"tasks": [...], "has_more": bool}``.
         """
@@ -293,8 +313,12 @@ class ClickUpClient:
         # "include_subtasks". Do not unify — they are distinct ClickUp API parameters.
         if include_subtasks:
             params["subtasks"] = "true"
+        if include_closed:
+            params["include_closed"] = "true"
         if status:
-            params["statuses"] = status
+            # ClickUp rejects a scalar `statuses` with PUBAPITASK_014 ("must be an array");
+            # the bracketed key serializes to the required `statuses[]=...` array form.
+            params["statuses[]"] = status
         if assignee:
             params["assignees"] = assignee
         if due_before is not None:
