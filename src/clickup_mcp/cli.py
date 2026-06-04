@@ -66,6 +66,19 @@ def workspaces() -> None:
 
 
 @app.command()
+def members(
+    workspace_id: str | None = typer.Option(None, "--workspace-id", "-w"),
+    workspace_name: str | None = typer.Option(None, "--workspace-name"),
+) -> None:
+    """List all members of a workspace."""
+    _out(
+        ClickUpClient.from_env().list_members(
+            workspace_id=workspace_id, workspace_name=workspace_name
+        )
+    )
+
+
+@app.command()
 def spaces(
     workspace_id: str | None = typer.Option(None, "--workspace-id", "-w"),
     workspace_name: str | None = typer.Option(None, "--workspace-name"),

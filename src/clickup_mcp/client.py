@@ -165,6 +165,23 @@ class ClickUpClient:
         result = self._field(self._request("GET", "/team"), "teams")
         return result if isinstance(result, list) else []
 
+    def list_members(
+        self, workspace_id: str | None = None, workspace_name: str | None = None
+    ) -> list[JsonValue]:
+        """List all members of a workspace.
+
+        Args:
+            workspace_id: Explicit workspace id (wins if provided).
+            workspace_name: Workspace name to look up (case-insensitive).
+
+        Returns:
+            List of member objects, each with ``id``, ``username``, ``email``, ``role``,
+            and other profile fields.
+        """
+        team = self._resolve_team(workspace_id, workspace_name)
+        result = self._field(self._request("GET", f"/team/{team}/member"), "members")
+        return result if isinstance(result, list) else []
+
     def list_spaces(
         self, workspace_id: str | None = None, workspace_name: str | None = None
     ) -> list[JsonValue]:

@@ -12,6 +12,7 @@ from clickup_mcp import server
 
 EXPECTED_TOOLS = {
     "list_workspaces",
+    "list_members",
     "list_spaces",
     "list_folders",
     "list_lists",

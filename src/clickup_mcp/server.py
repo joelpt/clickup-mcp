@@ -42,6 +42,12 @@ def list_workspaces() -> str:
 
 
 @mcp.tool()
+def list_members(workspace_id: str | None = None, workspace_name: str | None = None) -> str:
+    """List all members of a workspace (defaults to the configured workspace)."""
+    return _dump(_api().list_members(workspace_id=workspace_id, workspace_name=workspace_name))
+
+
+@mcp.tool()
 def list_spaces(workspace_id: str | None = None, workspace_name: str | None = None) -> str:
     """List spaces in a workspace (defaults to the configured workspace)."""
     return _dump(_api().list_spaces(workspace_id=workspace_id, workspace_name=workspace_name))
