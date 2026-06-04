@@ -54,6 +54,14 @@ Hierarchy: **Workspace > Space > Folder > List > Task**.
 `create_task` accepts a `parent` (task id); set it to create the new task as a subtask of
 that task (the parent must live in the same list).
 
+### Completed tasks
+
+`search_tasks` excludes closed/completed tasks by default (ClickUp's own default).
+Pass `include_closed=true` to surface them in an unfiltered search — the clean path for a
+full audit — or pass a `status` naming a closed-type status (e.g. `"done"`), which returns
+matching closed tasks even without `include_closed`.
+A `status` filter is sent as ClickUp's `statuses[]` array parameter.
+
 ### Custom fields
 
 `list_custom_fields` enumerates the custom fields at one scope — `list_id`, `folder_id`,
