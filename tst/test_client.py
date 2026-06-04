@@ -68,18 +68,21 @@ def test_list_members() -> None:
     member = {"id": 101, "username": "alice", "email": "alice@example.com", "role": 2}
 
     def handler(req: httpx.Request) -> httpx.Response:
-        assert req.url.path == "/api/v2/team/team1/member"
-        return _json({"members": [member]})
+        # Members are embedded in the workspace object; no separate /member endpoint.
+        assert req.url.path == "/api/v2/team"
+        return _json({"teams": [{"id": "team1", "name": "Acme", "members": [member]}]})
 
     assert make_client(handler).list_members(workspace_id="team1") == [member]
 
 
 def test_list_members_defaults_to_configured_workspace() -> None:
-    def handler(req: httpx.Request) -> httpx.Response:
-        assert req.url.path == "/api/v2/team/team1/member"
-        return _json({"members": []})
+    member = {"id": 202, "username": "bob", "email": "bob@example.com", "role": 4}
 
-    assert make_client(handler).list_members() == []
+    def handler(req: httpx.Request) -> httpx.Response:
+        assert req.url.path == "/api/v2/team"
+        return _json({"teams": [{"id": "team1", "name": "Acme", "members": [member]}]})
+
+    assert make_client(handler).list_members() == [member]
 
 
 def test_resolve_team_by_name() -> None:

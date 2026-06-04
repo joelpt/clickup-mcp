@@ -178,9 +178,53 @@ class ClickUpClient:
             List of member objects, each with ``id``, ``username``, ``email``, ``role``,
             and other profile fields.
         """
-        team = self._resolve_team(workspace_id, workspace_name)
-        result = self._field(self._request("GET", f"/team/{team}/member"), "members")
-        return result if isinstance(result, list) else []
+        # ClickUp API v2 has no /team/{id}/member endpoint; members are embedded
+        # in each workspace object returned by GET /team. Resolve + extract in one
+        # pass to avoid a second network round-trip.
+        teams = self.list_workspaces()
+        workspace = self._find_workspace(teams, workspace_id, workspace_name)
+        members = workspace.get("members", [])
+        return members if isinstance(members, list) else []
+
+    def _find_workspace(
+        self,
+        teams: list[JsonValue],
+        workspace_id: str | None,
+        workspace_name: str | None,
+    ) -> dict[str, JsonValue]:
+        """Return the workspace dict matching the given id, name, or configured default.
+
+        Args:
+            teams: List of workspace objects from the API.
+            workspace_id: Explicit workspace id (wins if provided).
+            workspace_name: Workspace name to match (case-insensitive).
+
+        Returns:
+            The matching workspace dict.
+
+        Raises:
+            ValueError: If no match is found or resolution is ambiguous.
+        """
+        dicts = [t for t in teams if isinstance(t, dict)]
+        if workspace_id:
+            for t in dicts:
+                if str(t.get("id")) == workspace_id:
+                    return t
+            raise ValueError(f"no workspace with id {workspace_id!r}")
+        if workspace_name:
+            matches = [t for t in dicts if str(t.get("name", "")).lower() == workspace_name.lower()]
+            if not matches:
+                names = [str(t.get("name")) for t in dicts]
+                raise ValueError(f"no workspace named {workspace_name!r}; available: {names}")
+            if len(matches) > 1:
+                raise ValueError(f"multiple workspaces named {workspace_name!r}; pass workspace_id")
+            return matches[0]
+        if self._team_id:
+            for t in dicts:
+                if str(t.get("id")) == self._team_id:
+                    return t
+            raise ValueError(f"configured workspace {self._team_id!r} not found in API response")
+        raise ValueError("no workspace: pass workspace_id/workspace_name or set CLICKUP_TEAM_ID")
 
     def list_spaces(
         self, workspace_id: str | None = None, workspace_name: str | None = None
