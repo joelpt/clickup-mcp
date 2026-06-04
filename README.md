@@ -43,9 +43,23 @@ Tools then appear as `mcp__clickup__list_workspaces`, `mcp__clickup__create_task
 
 ## Tools
 
-`list_workspaces`, `list_spaces`, `list_folders`, `list_lists`, `search_tasks`,
-`get_task`, `create_task`, `update_task`, `delete_task`, `list_comments`, `add_comment`,
-`list_custom_fields`, `set_custom_field_value`.
+The server exposes one tool per ClickUp operation, each individually gateable by
+the MCP host. Grouped by domain:
+
+- **Workspaces & navigation** — `list_workspaces`, `list_members`, `list_spaces`, `list_folders`, `list_lists`, `get_authorized_user`
+- **Spaces** — `get_space`, `create_space`, `update_space`, `delete_space`
+- **Folders** — `get_folder`, `create_folder`, `update_folder`, `delete_folder`
+- **Lists** — `get_list`, `get_list_members`, `create_list`, `create_folderless_list`, `update_list`, `delete_list`
+- **Tasks** — `search_tasks`, `get_task`, `create_task`, `update_task`, `delete_task`, `move_task`, `get_task_members`, `get_task_time_in_status`
+- **Dependencies & links** — `add_dependency`, `remove_dependency`, `add_task_link`, `remove_task_link`
+- **Checklists** — `create_checklist`, `update_checklist`, `delete_checklist`, `create_checklist_item`, `update_checklist_item`, `delete_checklist_item`
+- **Comments** — `list_comments`, `add_comment`, `list_list_comments`, `create_list_comment`, `update_comment`, `delete_comment`
+- **Custom fields** — `list_custom_fields`, `set_custom_field_value`, `remove_custom_field_value`
+- **Tags** — `get_space_tags`, `create_space_tag`, `update_space_tag`, `delete_space_tag`, `add_task_tag`, `remove_task_tag`
+- **Goals** — `list_goals`, `get_goal`, `create_goal`, `update_goal`, `delete_goal`, `create_key_result`, `update_key_result`, `delete_key_result`
+- **Views** — `list_workspace_views`, `list_space_views`, `list_folder_views`, `list_list_views`, `get_view`, `get_view_tasks`, `create_view`, `update_view`, `delete_view`
+- **Webhooks** — `list_webhooks`, `create_webhook`, `update_webhook`, `delete_webhook`
+- **Time tracking** — `get_time_entries`, `get_running_time_entry`, `create_time_entry`, `start_timer`, `stop_timer`, `update_time_entry`, `delete_time_entry`
 
 Hierarchy: **Workspace > Space > Folder > List > Task**.
 
