@@ -35,12 +35,15 @@ class P:
     body_key: str = ""  # API body/query key when different from param name
 
     def cli_flag_name(self) -> str:
+        """Return CLI flag name, defaulting to snake_case name converted to kebab-case."""
         return self.cli_flag if self.cli_flag else self.name.replace("_", "-")
 
     def api_key(self) -> str:
+        """Return the API body/query key, falling back to the param name."""
         return self.body_key if self.body_key else self.name
 
     def is_nullable(self) -> bool:
+        """Return True when the type annotation allows None."""
         return "| None" in self.type or self.type.startswith("None |")
 
 
@@ -61,18 +64,23 @@ class Endpoint:
     delete_id_param: str | None = None
 
     def path_params(self) -> list[P]:
+        """Return params embedded in the URL path."""
         return [p for p in self.params if p.kind == "path"]
 
     def body_params(self) -> list[P]:
+        """Return params sent in the request body."""
         return [p for p in self.params if p.kind == "body"]
 
     def query_params(self) -> list[P]:
+        """Return params sent as URL query string entries."""
         return [p for p in self.params if p.kind == "query"]
 
     def team_params(self) -> list[P]:
+        """Return params that carry workspace/team identity."""
         return [p for p in self.params if p.kind == "team"]
 
     def all_non_path_params(self) -> list[P]:
+        """Return all params that are not embedded in the URL path."""
         return [p for p in self.params if p.kind != "path"]
 
 
@@ -86,7 +94,6 @@ ENDPOINTS: list[Endpoint] = [
         cli_group="root",
         cli_cmd="whoami",
     ),
-
     # ── Spaces ────────────────────────────────────────────────────────────
     Endpoint(
         method="get_space",
@@ -135,7 +142,6 @@ ENDPOINTS: list[Endpoint] = [
         cli_group="root",
         cli_cmd="space-delete",
     ),
-
     # ── Folders ───────────────────────────────────────────────────────────
     Endpoint(
         method="get_folder",
@@ -180,7 +186,6 @@ ENDPOINTS: list[Endpoint] = [
         cli_group="root",
         cli_cmd="folder-delete",
     ),
-
     # ── Lists ─────────────────────────────────────────────────────────────
     Endpoint(
         method="get_list",
@@ -214,7 +219,7 @@ ENDPOINTS: list[Endpoint] = [
             P("priority", "int | None", required=False),
             P("assignee", "int | None", required=False),
         ],
-        doc="Create a list inside a folder. priority: 1=urgent 2=high 3=normal 4=low; due_date: Unix ms.",
+        doc="Create a list inside a folder. priority: 1=urgent 2=high 3=normal 4=low; due_date: Unix ms.",  # noqa: E501
         cli_group="root",
         cli_cmd="list-create",
     ),
@@ -230,7 +235,10 @@ ENDPOINTS: list[Endpoint] = [
             P("priority", "int | None", required=False),
             P("assignee", "int | None", required=False),
         ],
-        doc="Create a folderless list directly inside a space. priority: 1=urgent 2=high 3=normal 4=low; due_date: Unix ms.",
+        doc=(
+            "Create a folderless list directly inside a space."
+            " priority: 1=urgent 2=high 3=normal 4=low; due_date: Unix ms."
+        ),
         cli_group="root",
         cli_cmd="list-create-space",
     ),
@@ -259,7 +267,6 @@ ENDPOINTS: list[Endpoint] = [
         cli_group="root",
         cli_cmd="list-delete",
     ),
-
     # ── Task extras ───────────────────────────────────────────────────────
     Endpoint(
         method="get_task_members",
@@ -290,7 +297,10 @@ ENDPOINTS: list[Endpoint] = [
             P("depends_on", "str | None", required=False, default="None"),
             P("dependency_of", "str | None", required=False, default="None"),
         ],
-        doc="Add a dependency between tasks. Provide depends_on (this task waits on that one) or dependency_of (that task waits on this one).",
+        doc=(
+            "Add a dependency between tasks. Provide depends_on (this task waits on that one)"
+            " or dependency_of (that task waits on this one)."
+        ),
         cli_group="tasks",
         cli_cmd="add-dep",
     ),
@@ -345,7 +355,6 @@ ENDPOINTS: list[Endpoint] = [
         cli_group="tasks",
         cli_cmd="move",
     ),
-
     # ── Checklists ────────────────────────────────────────────────────────
     Endpoint(
         method="create_checklist",
@@ -398,8 +407,9 @@ ENDPOINTS: list[Endpoint] = [
     Endpoint(
         method="update_checklist_item",
         http="PUT",
-        path="/checklist_item/{checklist_item_id}",
+        path="/checklist/{checklist_id}/checklist_item/{checklist_item_id}",
         params=[
+            P("checklist_id", "str", kind="path"),
             P("checklist_item_id", "str", kind="path"),
             P("name", "str | None", required=False),
             P("resolved", "bool | None", required=False),
@@ -412,14 +422,16 @@ ENDPOINTS: list[Endpoint] = [
     Endpoint(
         method="delete_checklist_item",
         http="DELETE",
-        path="/checklist_item/{checklist_item_id}",
-        params=[P("checklist_item_id", "str", kind="path")],
+        path="/checklist/{checklist_id}/checklist_item/{checklist_item_id}",
+        params=[
+            P("checklist_id", "str", kind="path"),
+            P("checklist_item_id", "str", kind="path"),
+        ],
         delete_id_param="checklist_item_id",
         doc="Delete a checklist item.",
         cli_group="checklists",
         cli_cmd="item-delete",
     ),
-
     # ── Comments extras ───────────────────────────────────────────────────
     Endpoint(
         method="list_list_comments",
@@ -467,7 +479,6 @@ ENDPOINTS: list[Endpoint] = [
         cli_group="comments",
         cli_cmd="delete",
     ),
-
     # ── Custom fields extras ──────────────────────────────────────────────
     Endpoint(
         method="remove_custom_field_value",
@@ -482,7 +493,6 @@ ENDPOINTS: list[Endpoint] = [
         cli_group="fields",
         cli_cmd="clear",
     ),
-
     # ── Tags ──────────────────────────────────────────────────────────────
     Endpoint(
         method="get_space_tags",
@@ -562,7 +572,6 @@ ENDPOINTS: list[Endpoint] = [
         cli_group="tags",
         cli_cmd="remove",
     ),
-
     # ── Goals & Key Results ───────────────────────────────────────────────
     Endpoint(
         method="list_goals",
@@ -644,7 +653,10 @@ ENDPOINTS: list[Endpoint] = [
             P("task_ids", "list[str] | None", required=False),
             P("list_ids", "list[str] | None", required=False),
         ],
-        doc="Add a key result to a goal. type: 'number' | 'currency' | 'boolean' | 'percentage' | 'automatic'.",
+        doc=(
+            "Add a key result to a goal."
+            " type: 'number' | 'currency' | 'boolean' | 'percentage' | 'automatic'."
+        ),
         cli_group="goals",
         cli_cmd="kr-create",
     ),
@@ -671,7 +683,6 @@ ENDPOINTS: list[Endpoint] = [
         cli_group="goals",
         cli_cmd="kr-delete",
     ),
-
     # ── Views ─────────────────────────────────────────────────────────────
     Endpoint(
         method="list_workspace_views",
@@ -738,7 +749,7 @@ ENDPOINTS: list[Endpoint] = [
             P("view_id", "str", kind="path"),
             P("page", "int", required=False, default="0", kind="query"),
         ],
-        doc="Get tasks visible in a view. Returns one page; check has_more and increment page to paginate.",
+        doc="Get tasks visible in a view. Returns one page; check has_more and increment page to paginate.",  # noqa: E501
         cli_group="views",
         cli_cmd="tasks",
     ),
@@ -751,7 +762,10 @@ ENDPOINTS: list[Endpoint] = [
             P("name", "str"),
             P("type", "str"),
         ],
-        doc="Create a view on a list. type: 'list' | 'board' | 'calendar' | 'table' | 'gantt' | 'activity' | 'workload'.",
+        doc=(
+            "Create a view on a list."
+            " type: 'list' | 'board' | 'calendar' | 'table' | 'gantt' | 'activity' | 'workload'."
+        ),
         cli_group="views",
         cli_cmd="create",
     ),
@@ -778,7 +792,6 @@ ENDPOINTS: list[Endpoint] = [
         cli_group="views",
         cli_cmd="delete",
     ),
-
     # ── Webhooks ──────────────────────────────────────────────────────────
     Endpoint(
         method="list_webhooks",
@@ -820,7 +833,7 @@ ENDPOINTS: list[Endpoint] = [
             P("events", "list[str] | None", required=False),
             P("status", "str | None", required=False),
         ],
-        doc="Update a webhook's endpoint URL, subscribed events, or status ('active' | 'inactive').",
+        doc="Update a webhook's endpoint URL, subscribed events, or status ('active' | 'inactive').",  # noqa: E501
         cli_group="webhooks",
         cli_cmd="update",
     ),
@@ -834,7 +847,6 @@ ENDPOINTS: list[Endpoint] = [
         cli_group="webhooks",
         cli_cmd="delete",
     ),
-
     # ── Time Tracking ─────────────────────────────────────────────────────
     Endpoint(
         method="get_time_entries",
@@ -981,34 +993,34 @@ def gen_client_method(ep: Endpoint) -> str:
     ret = "list[JsonValue]" if ep.returns_list else "JsonValue"
 
     body: list[str] = []
-    body.append(f'def {ep.method}({sig}) -> {ret}:')
+    body.append(f"def {ep.method}({sig}) -> {ret}:")
     body.append(f'    """{ep.doc}"""')
 
     if ep.needs_team:
         team_params = ep.team_params()
         wid = "workspace_id" if any(p.name == "workspace_id" for p in team_params) else "None"
         wname = "workspace_name" if any(p.name == "workspace_name" for p in team_params) else "None"
-        body.append(f'    team = self._resolve_team({wid}, {wname})')
+        body.append(f"    team = self._resolve_team({wid}, {wname})")
 
     bparams = ep.body_params()
     qparams = ep.query_params()
 
     if ep.http in ("POST", "PUT") and bparams:
-        body.append('    body: dict[str, object] = {}')
+        body.append("    body: dict[str, object] = {}")
         for p in bparams:
             key = p.api_key()
             if p.required or not p.is_nullable():
                 body.append(f'    body["{key}"] = {p.name}')
             else:
-                body.append(f'    if {p.name} is not None:')
+                body.append(f"    if {p.name} is not None:")
                 body.append(f'        body["{key}"] = {p.name}')
         body.append(f'    return self._request("{ep.http}", f"{ep.path}", json=body)')
 
     elif ep.http == "DELETE":
         if qparams:
-            body.append('    params: dict[str, object] = {}')
+            body.append("    params: dict[str, object] = {}")
             for p in qparams:
-                body.append(f'    if {p.name} is not None:')
+                body.append(f"    if {p.name} is not None:")
                 body.append(f'        params["{p.name}"] = {p.name}')
             body.append(f'    self._request("DELETE", f"{ep.path}", params=params)')
         else:
@@ -1016,26 +1028,26 @@ def gen_client_method(ep: Endpoint) -> str:
         if ep.delete_id_param:
             body.append(f'    return {{"deleted": {ep.delete_id_param}}}')
         else:
-            body.append('    return {}')
+            body.append("    return {}")
 
     else:
         if qparams:
-            body.append('    params: dict[str, object] = {}')
+            body.append("    params: dict[str, object] = {}")
             for p in qparams:
                 if p.required:
                     body.append(f'    params["{p.name}"] = {p.name}')
                 else:
-                    body.append(f'    if {p.name} is not None:')
+                    body.append(f"    if {p.name} is not None:")
                     body.append(f'        params["{p.name}"] = {p.name}')
             call = f'self._request("{ep.http}", f"{ep.path}", params=params)'
         else:
             call = f'self._request("{ep.http}", f"{ep.path}")'
 
         if ep.response_key:
-            body.append(f'    result = self._field({call}, {ep.response_key!r})')
-            body.append('    return result if isinstance(result, list) else []')
+            body.append(f"    result = self._field({call}, {ep.response_key!r})")
+            body.append("    return result if isinstance(result, list) else []")
         else:
-            body.append(f'    return {call}')
+            body.append(f"    return {call}")
 
     return "\n".join(body)
 
@@ -1141,9 +1153,10 @@ def gen_cli_command(ep: Endpoint) -> str:
 
 
 def gen_cli_groups_block() -> str:
+    """Emit Typer sub-app declarations and app.add_typer() registrations for new groups."""
     lines = [""]
-    for var, name, help_text in NEW_CLI_GROUPS:
-        lines.append(f'{var} = typer.Typer(no_args_is_help=True, help={help_text!r})')
+    for var, _name, help_text in NEW_CLI_GROUPS:
+        lines.append(f"{var} = typer.Typer(no_args_is_help=True, help={help_text!r})")
     lines.append("")
     for var, name, _ in NEW_CLI_GROUPS:
         lines.append(f'app.add_typer({var}, name="{name}")')
@@ -1166,10 +1179,16 @@ def main() -> None:
     server_src = SERVER_FILE.read_text()
     cli_src = CLI_FILE.read_text()
 
+    # Guard against re-running on already-generated output; the first generated
+    # method name is a reliable sentinel that won't appear in the original files.
+    sentinel = "def get_authorized_user"
+    if sentinel in client_src or sentinel in server_src:
+        print("Already generated — target files already contain generated code.")
+        print("Revert the files first before re-running the generator.")
+        raise SystemExit(1)
+
     # ── client.py: insert methods inside the class, before module-level helpers ──
-    client_methods = "\n\n".join(
-        textwrap.indent(gen_client_method(ep), "    ") for ep in ENDPOINTS
-    )
+    client_methods = "\n\n".join(textwrap.indent(gen_client_method(ep), "    ") for ep in ENDPOINTS)
     client_block = f"\n\n{client_methods}\n"
     client_src = _insert(client_src, CLIENT_ANCHOR, client_block)
     CLIENT_FILE.write_text(client_src)
