@@ -505,6 +505,656 @@ class ClickUpClient:
         """
         return self._request("POST", f"/task/{task_id}/field/{field_id}", json={"value": value})
 
+    def get_authorized_user(self) -> JsonValue:
+        """Return the ClickUp user associated with the configured API key."""
+        return self._request("GET", "/user")
+
+    def get_space(self, space_id: str) -> JsonValue:
+        """Get a single space by id."""
+        return self._request("GET", f"/space/{space_id}")
+
+    def create_space(
+        self, name: str, *, workspace_id: str | None = None, workspace_name: str | None = None
+    ) -> JsonValue:
+        """Create a new space in a workspace."""
+        team = self._resolve_team(workspace_id, workspace_name)
+        body: dict[str, object] = {}
+        body["name"] = name
+        return self._request("POST", f"/team/{team}/space", json=body)
+
+    def update_space(
+        self,
+        space_id: str,
+        *,
+        name: str | None = None,
+        color: str | None = None,
+        private: bool | None = None,
+    ) -> JsonValue:
+        """Update a space. Pass only the fields to change."""
+        body: dict[str, object] = {}
+        if name is not None:
+            body["name"] = name
+        if color is not None:
+            body["color"] = color
+        if private is not None:
+            body["private"] = private
+        return self._request("PUT", f"/space/{space_id}", json=body)
+
+    def delete_space(self, space_id: str) -> JsonValue:
+        """Permanently delete a space."""
+        self._request("DELETE", f"/space/{space_id}")
+        return {"deleted": space_id}
+
+    def get_folder(self, folder_id: str) -> JsonValue:
+        """Get a single folder by id."""
+        return self._request("GET", f"/folder/{folder_id}")
+
+    def create_folder(self, space_id: str, name: str) -> JsonValue:
+        """Create a folder inside a space."""
+        body: dict[str, object] = {}
+        body["name"] = name
+        return self._request("POST", f"/space/{space_id}/folder", json=body)
+
+    def update_folder(self, folder_id: str, name: str) -> JsonValue:
+        """Rename a folder."""
+        body: dict[str, object] = {}
+        body["name"] = name
+        return self._request("PUT", f"/folder/{folder_id}", json=body)
+
+    def delete_folder(self, folder_id: str) -> JsonValue:
+        """Permanently delete a folder."""
+        self._request("DELETE", f"/folder/{folder_id}")
+        return {"deleted": folder_id}
+
+    def get_list(self, list_id: str) -> JsonValue:
+        """Get a single list by id."""
+        return self._request("GET", f"/list/{list_id}")
+
+    def get_list_members(self, list_id: str) -> list[JsonValue]:
+        """List members who have access to a list."""
+        result = self._field(self._request("GET", f"/list/{list_id}/member"), "members")
+        return result if isinstance(result, list) else []
+
+    def create_list(
+        self,
+        folder_id: str,
+        name: str,
+        *,
+        status: str | None = None,
+        due_date: int | None = None,
+        priority: int | None = None,
+        assignee: int | None = None,
+    ) -> JsonValue:
+        """Create a list in a folder.
+
+        priority: 1=urgent 2=high 3=normal 4=low; due_date: Unix ms.
+        """
+        body: dict[str, object] = {}
+        body["name"] = name
+        if status is not None:
+            body["status"] = status
+        if due_date is not None:
+            body["due_date"] = due_date
+        if priority is not None:
+            body["priority"] = priority
+        if assignee is not None:
+            body["assignee"] = assignee
+        return self._request("POST", f"/folder/{folder_id}/list", json=body)
+
+    def create_folderless_list(
+        self,
+        space_id: str,
+        name: str,
+        *,
+        status: str | None = None,
+        due_date: int | None = None,
+        priority: int | None = None,
+        assignee: int | None = None,
+    ) -> JsonValue:
+        """Create a folderless list in a space.
+
+        priority: 1=urgent 2=high 3=normal 4=low; due_date: Unix ms.
+        """
+        body: dict[str, object] = {}
+        body["name"] = name
+        if status is not None:
+            body["status"] = status
+        if due_date is not None:
+            body["due_date"] = due_date
+        if priority is not None:
+            body["priority"] = priority
+        if assignee is not None:
+            body["assignee"] = assignee
+        return self._request("POST", f"/space/{space_id}/list", json=body)
+
+    def update_list(
+        self,
+        list_id: str,
+        *,
+        name: str | None = None,
+        status: str | None = None,
+        due_date: int | None = None,
+        priority: int | None = None,
+    ) -> JsonValue:
+        """Update a list. Pass only the fields to change; due_date is Unix ms."""
+        body: dict[str, object] = {}
+        if name is not None:
+            body["name"] = name
+        if status is not None:
+            body["status"] = status
+        if due_date is not None:
+            body["due_date"] = due_date
+        if priority is not None:
+            body["priority"] = priority
+        return self._request("PUT", f"/list/{list_id}", json=body)
+
+    def delete_list(self, list_id: str) -> JsonValue:
+        """Permanently delete a list."""
+        self._request("DELETE", f"/list/{list_id}")
+        return {"deleted": list_id}
+
+    def get_task_members(self, task_id: str) -> list[JsonValue]:
+        """List members who are assigned to or watching a task."""
+        result = self._field(self._request("GET", f"/task/{task_id}/member"), "members")
+        return result if isinstance(result, list) else []
+
+    def get_task_time_in_status(self, task_id: str) -> JsonValue:
+        """Return the time a task has spent in each status."""
+        return self._request("GET", f"/task/{task_id}/time_in_status")
+
+    def add_dependency(
+        self, task_id: str, *, depends_on: str | None = None, dependency_of: str | None = None
+    ) -> JsonValue:
+        """Add a dependency between tasks.
+
+        depends_on: this task blocks on that one; dependency_of: that one blocks on this.
+        """
+        body: dict[str, object] = {}
+        if depends_on is not None:
+            body["depends_on"] = depends_on
+        if dependency_of is not None:
+            body["dependency_of"] = dependency_of
+        return self._request("POST", f"/task/{task_id}/dependency", json=body)
+
+    def remove_dependency(
+        self, task_id: str, *, depends_on: str | None = None, dependency_of: str | None = None
+    ) -> JsonValue:
+        """Remove a dependency. Provide the same depends_on or dependency_of used when adding."""
+        params: dict[str, object] = {}
+        if depends_on is not None:
+            params["depends_on"] = depends_on
+        if dependency_of is not None:
+            params["dependency_of"] = dependency_of
+        self._request("DELETE", f"/task/{task_id}/dependency", params=params)
+        return {"deleted": task_id}
+
+    def add_task_link(self, task_id: str, links_to: str) -> JsonValue:
+        """Create a link between two tasks."""
+        return self._request("POST", f"/task/{task_id}/link/{links_to}")
+
+    def remove_task_link(self, task_id: str, links_to: str) -> JsonValue:
+        """Remove a link between two tasks."""
+        self._request("DELETE", f"/task/{task_id}/link/{links_to}")
+        return {"deleted": task_id}
+
+    def move_task(self, task_id: str, list_id: str) -> JsonValue:
+        """Move a task to a different list."""
+        body: dict[str, object] = {}
+        body["list_id"] = list_id
+        return self._request("POST", f"/task/{task_id}/move", json=body)
+
+    def create_checklist(self, task_id: str, name: str) -> JsonValue:
+        """Create a checklist on a task."""
+        body: dict[str, object] = {}
+        body["name"] = name
+        return self._request("POST", f"/task/{task_id}/checklist", json=body)
+
+    def update_checklist(
+        self, checklist_id: str, *, name: str | None = None, position: int | None = None
+    ) -> JsonValue:
+        """Rename a checklist or change its position."""
+        body: dict[str, object] = {}
+        if name is not None:
+            body["name"] = name
+        if position is not None:
+            body["position"] = position
+        return self._request("PUT", f"/checklist/{checklist_id}", json=body)
+
+    def delete_checklist(self, checklist_id: str) -> JsonValue:
+        """Delete a checklist."""
+        self._request("DELETE", f"/checklist/{checklist_id}")
+        return {"deleted": checklist_id}
+
+    def create_checklist_item(
+        self, checklist_id: str, name: str, *, assignee: int | None = None
+    ) -> JsonValue:
+        """Add an item to a checklist."""
+        body: dict[str, object] = {}
+        body["name"] = name
+        if assignee is not None:
+            body["assignee"] = assignee
+        return self._request("POST", f"/checklist/{checklist_id}/checklist_item", json=body)
+
+    def update_checklist_item(
+        self,
+        checklist_item_id: str,
+        *,
+        name: str | None = None,
+        resolved: bool | None = None,
+        assignee: int | None = None,
+    ) -> JsonValue:
+        """Update a checklist item's name, resolution state, or assignee."""
+        body: dict[str, object] = {}
+        if name is not None:
+            body["name"] = name
+        if resolved is not None:
+            body["resolved"] = resolved
+        if assignee is not None:
+            body["assignee"] = assignee
+        return self._request("PUT", f"/checklist_item/{checklist_item_id}", json=body)
+
+    def delete_checklist_item(self, checklist_item_id: str) -> JsonValue:
+        """Delete a checklist item."""
+        self._request("DELETE", f"/checklist_item/{checklist_item_id}")
+        return {"deleted": checklist_item_id}
+
+    def list_list_comments(self, list_id: str) -> list[JsonValue]:
+        """List all comments on a list (not on a specific task)."""
+        result = self._field(self._request("GET", f"/list/{list_id}/comment"), "comments")
+        return result if isinstance(result, list) else []
+
+    def create_list_comment(
+        self, list_id: str, text: str, *, notify_all: bool = False
+    ) -> JsonValue:
+        """Post a comment on a list; set notify_all to notify all list members."""
+        body: dict[str, object] = {}
+        body["comment_text"] = text
+        body["notify_all"] = notify_all
+        return self._request("POST", f"/list/{list_id}/comment", json=body)
+
+    def update_comment(self, comment_id: str, text: str) -> JsonValue:
+        """Edit the text of an existing comment."""
+        body: dict[str, object] = {}
+        body["comment_text"] = text
+        return self._request("PUT", f"/comment/{comment_id}", json=body)
+
+    def delete_comment(self, comment_id: str) -> JsonValue:
+        """Delete a comment."""
+        self._request("DELETE", f"/comment/{comment_id}")
+        return {"deleted": comment_id}
+
+    def remove_custom_field_value(self, task_id: str, field_id: str) -> JsonValue:
+        """Clear a custom field value on a task."""
+        self._request("DELETE", f"/task/{task_id}/field/{field_id}")
+        return {"deleted": field_id}
+
+    def get_space_tags(self, space_id: str) -> list[JsonValue]:
+        """List all tags defined in a space."""
+        result = self._field(self._request("GET", f"/space/{space_id}/tag"), "tags")
+        return result if isinstance(result, list) else []
+
+    def create_space_tag(
+        self, space_id: str, name: str, *, bg_color: str | None = None, fg_color: str | None = None
+    ) -> JsonValue:
+        """Create a tag in a space. Colors are hex strings (e.g. '#ff0000')."""
+        body: dict[str, object] = {}
+        body["name"] = name
+        if bg_color is not None:
+            body["bg_color"] = bg_color
+        if fg_color is not None:
+            body["fg_color"] = fg_color
+        return self._request("POST", f"/space/{space_id}/tag", json=body)
+
+    def update_space_tag(
+        self,
+        space_id: str,
+        tag_name: str,
+        *,
+        name: str | None = None,
+        bg_color: str | None = None,
+        fg_color: str | None = None,
+    ) -> JsonValue:
+        """Update a space tag's name or colors."""
+        body: dict[str, object] = {}
+        if name is not None:
+            body["name"] = name
+        if bg_color is not None:
+            body["bg_color"] = bg_color
+        if fg_color is not None:
+            body["fg_color"] = fg_color
+        return self._request("PUT", f"/space/{space_id}/tag/{tag_name}", json=body)
+
+    def delete_space_tag(self, space_id: str, tag_name: str) -> JsonValue:
+        """Delete a tag from a space."""
+        self._request("DELETE", f"/space/{space_id}/tag/{tag_name}")
+        return {"deleted": tag_name}
+
+    def add_task_tag(self, task_id: str, tag_name: str) -> JsonValue:
+        """Add a tag to a task."""
+        return self._request("POST", f"/task/{task_id}/tag/{tag_name}")
+
+    def remove_task_tag(self, task_id: str, tag_name: str) -> JsonValue:
+        """Remove a tag from a task."""
+        self._request("DELETE", f"/task/{task_id}/tag/{tag_name}")
+        return {"deleted": tag_name}
+
+    def list_goals(
+        self, *, workspace_id: str | None = None, workspace_name: str | None = None
+    ) -> list[JsonValue]:
+        """List all goals in a workspace."""
+        team = self._resolve_team(workspace_id, workspace_name)
+        result = self._field(self._request("GET", f"/team/{team}/goal"), "goals")
+        return result if isinstance(result, list) else []
+
+    def get_goal(self, goal_id: str) -> JsonValue:
+        """Get a single goal by id."""
+        return self._request("GET", f"/goal/{goal_id}")
+
+    def create_goal(
+        self,
+        name: str,
+        *,
+        due_date: int | None = None,
+        description: str | None = None,
+        color: str | None = None,
+        workspace_id: str | None = None,
+        workspace_name: str | None = None,
+    ) -> JsonValue:
+        """Create a goal in a workspace. due_date is Unix ms."""
+        team = self._resolve_team(workspace_id, workspace_name)
+        body: dict[str, object] = {}
+        body["name"] = name
+        if due_date is not None:
+            body["due_date"] = due_date
+        if description is not None:
+            body["description"] = description
+        if color is not None:
+            body["color"] = color
+        return self._request("POST", f"/team/{team}/goal", json=body)
+
+    def update_goal(
+        self,
+        goal_id: str,
+        *,
+        name: str | None = None,
+        due_date: int | None = None,
+        description: str | None = None,
+        color: str | None = None,
+    ) -> JsonValue:
+        """Update a goal. Pass only the fields to change."""
+        body: dict[str, object] = {}
+        if name is not None:
+            body["name"] = name
+        if due_date is not None:
+            body["due_date"] = due_date
+        if description is not None:
+            body["description"] = description
+        if color is not None:
+            body["color"] = color
+        return self._request("PUT", f"/goal/{goal_id}", json=body)
+
+    def delete_goal(self, goal_id: str) -> JsonValue:
+        """Delete a goal."""
+        self._request("DELETE", f"/goal/{goal_id}")
+        return {"deleted": goal_id}
+
+    def create_key_result(
+        self,
+        goal_id: str,
+        name: str,
+        type: str,
+        steps_start: int,
+        steps_end: int,
+        unit: str,
+        *,
+        task_ids: list[str] | None = None,
+        list_ids: list[str] | None = None,
+    ) -> JsonValue:
+        """Add a key result to a goal. type: number|currency|boolean|percentage|automatic."""
+        body: dict[str, object] = {}
+        body["name"] = name
+        body["type"] = type
+        body["steps_start"] = steps_start
+        body["steps_end"] = steps_end
+        body["unit"] = unit
+        if task_ids is not None:
+            body["task_ids"] = task_ids
+        if list_ids is not None:
+            body["list_ids"] = list_ids
+        return self._request("POST", f"/goal/{goal_id}/key_result", json=body)
+
+    def update_key_result(
+        self, key_result_id: str, steps_current: int, *, note: str | None = None
+    ) -> JsonValue:
+        """Update a key result's current progress."""
+        body: dict[str, object] = {}
+        body["steps_current"] = steps_current
+        if note is not None:
+            body["note"] = note
+        return self._request("PUT", f"/key_result/{key_result_id}", json=body)
+
+    def delete_key_result(self, key_result_id: str) -> JsonValue:
+        """Delete a key result."""
+        self._request("DELETE", f"/key_result/{key_result_id}")
+        return {"deleted": key_result_id}
+
+    def list_workspace_views(
+        self, *, workspace_id: str | None = None, workspace_name: str | None = None
+    ) -> list[JsonValue]:
+        """List all views in a workspace."""
+        team = self._resolve_team(workspace_id, workspace_name)
+        result = self._field(self._request("GET", f"/team/{team}/view"), "views")
+        return result if isinstance(result, list) else []
+
+    def list_space_views(self, space_id: str) -> list[JsonValue]:
+        """List all views in a space."""
+        result = self._field(self._request("GET", f"/space/{space_id}/view"), "views")
+        return result if isinstance(result, list) else []
+
+    def list_folder_views(self, folder_id: str) -> list[JsonValue]:
+        """List all views in a folder."""
+        result = self._field(self._request("GET", f"/folder/{folder_id}/view"), "views")
+        return result if isinstance(result, list) else []
+
+    def list_list_views(self, list_id: str) -> list[JsonValue]:
+        """List all views in a list."""
+        result = self._field(self._request("GET", f"/list/{list_id}/view"), "views")
+        return result if isinstance(result, list) else []
+
+    def get_view(self, view_id: str) -> JsonValue:
+        """Get a single view by id."""
+        return self._request("GET", f"/view/{view_id}")
+
+    def get_view_tasks(self, view_id: str, *, page: int = 0) -> JsonValue:
+        """Get tasks visible in a view. Returns one page; increment page to paginate."""
+        params: dict[str, object] = {}
+        if page is not None:
+            params["page"] = page
+        return self._request("GET", f"/view/{view_id}/task", params=params)
+
+    def create_view(self, list_id: str, name: str, type: str) -> JsonValue:
+        """Create a view on a list. type: list|board|calendar|table|gantt|activity|workload."""
+        body: dict[str, object] = {}
+        body["name"] = name
+        body["type"] = type
+        return self._request("POST", f"/list/{list_id}/view", json=body)
+
+    def update_view(self, view_id: str, name: str, type: str) -> JsonValue:
+        """Update a view's name or type."""
+        body: dict[str, object] = {}
+        body["name"] = name
+        body["type"] = type
+        return self._request("PUT", f"/view/{view_id}", json=body)
+
+    def delete_view(self, view_id: str) -> JsonValue:
+        """Delete a view."""
+        self._request("DELETE", f"/view/{view_id}")
+        return {"deleted": view_id}
+
+    def list_webhooks(
+        self, *, workspace_id: str | None = None, workspace_name: str | None = None
+    ) -> list[JsonValue]:
+        """List all webhooks in a workspace."""
+        team = self._resolve_team(workspace_id, workspace_name)
+        result = self._field(self._request("GET", f"/team/{team}/webhook"), "webhooks")
+        return result if isinstance(result, list) else []
+
+    def create_webhook(
+        self,
+        endpoint: str,
+        events: list[str],
+        *,
+        workspace_id: str | None = None,
+        workspace_name: str | None = None,
+    ) -> JsonValue:
+        """Register a webhook. events: list of event names, or ['*'] for all events."""
+        team = self._resolve_team(workspace_id, workspace_name)
+        body: dict[str, object] = {}
+        body["endpoint"] = endpoint
+        body["events"] = events
+        return self._request("POST", f"/team/{team}/webhook", json=body)
+
+    def update_webhook(
+        self,
+        webhook_id: str,
+        *,
+        endpoint: str | None = None,
+        events: list[str] | None = None,
+        status: str | None = None,
+    ) -> JsonValue:
+        """Update a webhook's endpoint URL, subscribed events, or status ('active' | 'inactive')."""
+        body: dict[str, object] = {}
+        if endpoint is not None:
+            body["endpoint"] = endpoint
+        if events is not None:
+            body["events"] = events
+        if status is not None:
+            body["status"] = status
+        return self._request("PUT", f"/webhook/{webhook_id}", json=body)
+
+    def delete_webhook(self, webhook_id: str) -> JsonValue:
+        """Delete a webhook."""
+        self._request("DELETE", f"/webhook/{webhook_id}")
+        return {"deleted": webhook_id}
+
+    def get_time_entries(
+        self,
+        *,
+        workspace_id: str | None = None,
+        workspace_name: str | None = None,
+        start_date: int | None = None,
+        end_date: int | None = None,
+        assignee: int | None = None,
+        task_id: str | None = None,
+    ) -> list[JsonValue]:
+        """Get time entries for a workspace. start_date/end_date are Unix ms timestamps."""
+        team = self._resolve_team(workspace_id, workspace_name)
+        params: dict[str, object] = {}
+        if start_date is not None:
+            params["start_date"] = start_date
+        if end_date is not None:
+            params["end_date"] = end_date
+        if assignee is not None:
+            params["assignee"] = assignee
+        if task_id is not None:
+            params["task_id"] = task_id
+        result = self._field(
+            self._request("GET", f"/team/{team}/time_entries", params=params), "data"
+        )
+        return result if isinstance(result, list) else []
+
+    def get_running_time_entry(
+        self, *, workspace_id: str | None = None, workspace_name: str | None = None
+    ) -> JsonValue:
+        """Get the currently running time entry for the workspace, if any."""
+        team = self._resolve_team(workspace_id, workspace_name)
+        return self._request("GET", f"/team/{team}/time_entries/current")
+
+    def create_time_entry(
+        self,
+        start: int,
+        duration: int,
+        *,
+        workspace_id: str | None = None,
+        workspace_name: str | None = None,
+        task_id: str | None = None,
+        description: str | None = None,
+        billable: bool = False,
+    ) -> JsonValue:
+        """Manually log a time entry. start is Unix ms; duration is milliseconds."""
+        team = self._resolve_team(workspace_id, workspace_name)
+        body: dict[str, object] = {}
+        body["start"] = start
+        body["duration"] = duration
+        if task_id is not None:
+            body["task_id"] = task_id
+        if description is not None:
+            body["description"] = description
+        body["billable"] = billable
+        return self._request("POST", f"/team/{team}/time_entries", json=body)
+
+    def start_timer(
+        self,
+        *,
+        workspace_id: str | None = None,
+        workspace_name: str | None = None,
+        task_id: str | None = None,
+        description: str | None = None,
+        billable: bool = False,
+    ) -> JsonValue:
+        """Start a new timer. Stops any currently running timer."""
+        team = self._resolve_team(workspace_id, workspace_name)
+        body: dict[str, object] = {}
+        if task_id is not None:
+            body["task_id"] = task_id
+        if description is not None:
+            body["description"] = description
+        body["billable"] = billable
+        return self._request("POST", f"/team/{team}/time_entries/start", json=body)
+
+    def stop_timer(
+        self, *, workspace_id: str | None = None, workspace_name: str | None = None
+    ) -> JsonValue:
+        """Stop the currently running timer."""
+        team = self._resolve_team(workspace_id, workspace_name)
+        return self._request("POST", f"/team/{team}/time_entries/stop")
+
+    def update_time_entry(
+        self,
+        time_entry_id: str,
+        *,
+        workspace_id: str | None = None,
+        workspace_name: str | None = None,
+        start: int | None = None,
+        duration: int | None = None,
+        description: str | None = None,
+        billable: bool | None = None,
+    ) -> JsonValue:
+        """Update a time entry. start is Unix ms; duration is ms."""
+        team = self._resolve_team(workspace_id, workspace_name)
+        body: dict[str, object] = {}
+        if start is not None:
+            body["start"] = start
+        if duration is not None:
+            body["duration"] = duration
+        if description is not None:
+            body["description"] = description
+        if billable is not None:
+            body["billable"] = billable
+        return self._request("PUT", f"/team/{team}/time_entries/{time_entry_id}", json=body)
+
+    def delete_time_entry(
+        self,
+        time_entry_id: str,
+        *,
+        workspace_id: str | None = None,
+        workspace_name: str | None = None,
+    ) -> JsonValue:
+        """Delete a time entry."""
+        team = self._resolve_team(workspace_id, workspace_name)
+        self._request("DELETE", f"/team/{team}/time_entries/{time_entry_id}")
+        return {"deleted": time_entry_id}
+
 
 def _resolve_dropdown_fields(task: JsonValue) -> None:
     """Resolve drop_down custom-field integer orderindex values to option-name strings in-place.

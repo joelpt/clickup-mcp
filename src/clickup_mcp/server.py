@@ -232,6 +232,631 @@ def set_custom_field_value(
     return _dump(_api().set_custom_field_value(task_id, field_id, value))
 
 
+@mcp.tool()
+def get_authorized_user() -> str:
+    """Return the ClickUp user associated with the configured API key."""
+    return _dump(_api().get_authorized_user())
+
+
+@mcp.tool()
+def get_space(space_id: str) -> str:
+    """Get a single space by id."""
+    return _dump(_api().get_space(space_id))
+
+
+@mcp.tool()
+def create_space(
+    name: str, workspace_id: str | None = None, workspace_name: str | None = None
+) -> str:
+    """Create a new space in a workspace."""
+    return _dump(
+        _api().create_space(name=name, workspace_id=workspace_id, workspace_name=workspace_name)
+    )
+
+
+@mcp.tool()
+def update_space(
+    space_id: str, name: str | None = None, color: str | None = None, private: bool | None = None
+) -> str:
+    """Update a space. Pass only the fields to change."""
+    return _dump(_api().update_space(space_id, name=name, color=color, private=private))
+
+
+@mcp.tool()
+def delete_space(space_id: str) -> str:
+    """Permanently delete a space."""
+    return _dump(_api().delete_space(space_id))
+
+
+@mcp.tool()
+def get_folder(folder_id: str) -> str:
+    """Get a single folder by id."""
+    return _dump(_api().get_folder(folder_id))
+
+
+@mcp.tool()
+def create_folder(space_id: str, name: str) -> str:
+    """Create a folder inside a space."""
+    return _dump(_api().create_folder(space_id, name=name))
+
+
+@mcp.tool()
+def update_folder(folder_id: str, name: str) -> str:
+    """Rename a folder."""
+    return _dump(_api().update_folder(folder_id, name=name))
+
+
+@mcp.tool()
+def delete_folder(folder_id: str) -> str:
+    """Permanently delete a folder."""
+    return _dump(_api().delete_folder(folder_id))
+
+
+@mcp.tool()
+def get_list(list_id: str) -> str:
+    """Get a single list by id."""
+    return _dump(_api().get_list(list_id))
+
+
+@mcp.tool()
+def get_list_members(list_id: str) -> str:
+    """List members who have access to a list."""
+    return _dump(_api().get_list_members(list_id))
+
+
+@mcp.tool()
+def create_list(
+    folder_id: str,
+    name: str,
+    status: str | None = None,
+    due_date: int | None = None,
+    priority: int | None = None,
+    assignee: int | None = None,
+) -> str:
+    """Create a list in a folder.
+
+    priority: 1=urgent 2=high 3=normal 4=low; due_date: Unix ms.
+    """
+    return _dump(
+        _api().create_list(
+            folder_id,
+            name=name,
+            status=status,
+            due_date=due_date,
+            priority=priority,
+            assignee=assignee,
+        )
+    )
+
+
+@mcp.tool()
+def create_folderless_list(
+    space_id: str,
+    name: str,
+    status: str | None = None,
+    due_date: int | None = None,
+    priority: int | None = None,
+    assignee: int | None = None,
+) -> str:
+    """Create a folderless list in a space.
+
+    priority: 1=urgent 2=high 3=normal 4=low; due_date: Unix ms.
+    """
+    return _dump(
+        _api().create_folderless_list(
+            space_id,
+            name=name,
+            status=status,
+            due_date=due_date,
+            priority=priority,
+            assignee=assignee,
+        )
+    )
+
+
+@mcp.tool()
+def update_list(
+    list_id: str,
+    name: str | None = None,
+    status: str | None = None,
+    due_date: int | None = None,
+    priority: int | None = None,
+) -> str:
+    """Update a list. Pass only the fields to change; due_date is Unix ms."""
+    return _dump(
+        _api().update_list(list_id, name=name, status=status, due_date=due_date, priority=priority)
+    )
+
+
+@mcp.tool()
+def delete_list(list_id: str) -> str:
+    """Permanently delete a list."""
+    return _dump(_api().delete_list(list_id))
+
+
+@mcp.tool()
+def get_task_members(task_id: str) -> str:
+    """List members who are assigned to or watching a task."""
+    return _dump(_api().get_task_members(task_id))
+
+
+@mcp.tool()
+def get_task_time_in_status(task_id: str) -> str:
+    """Return the time a task has spent in each status."""
+    return _dump(_api().get_task_time_in_status(task_id))
+
+
+@mcp.tool()
+def add_dependency(
+    task_id: str, depends_on: str | None = None, dependency_of: str | None = None
+) -> str:
+    """Add a dependency between tasks.
+
+    depends_on: this task blocks on that one; dependency_of: that one blocks on this.
+    """
+    return _dump(_api().add_dependency(task_id, depends_on=depends_on, dependency_of=dependency_of))
+
+
+@mcp.tool()
+def remove_dependency(
+    task_id: str, depends_on: str | None = None, dependency_of: str | None = None
+) -> str:
+    """Remove a dependency. Provide the same depends_on or dependency_of used when adding."""
+    return _dump(
+        _api().remove_dependency(task_id, depends_on=depends_on, dependency_of=dependency_of)
+    )
+
+
+@mcp.tool()
+def add_task_link(task_id: str, links_to: str) -> str:
+    """Create a link between two tasks."""
+    return _dump(_api().add_task_link(task_id, links_to))
+
+
+@mcp.tool()
+def remove_task_link(task_id: str, links_to: str) -> str:
+    """Remove a link between two tasks."""
+    return _dump(_api().remove_task_link(task_id, links_to))
+
+
+@mcp.tool()
+def move_task(task_id: str, list_id: str) -> str:
+    """Move a task to a different list."""
+    return _dump(_api().move_task(task_id, list_id=list_id))
+
+
+@mcp.tool()
+def create_checklist(task_id: str, name: str) -> str:
+    """Create a checklist on a task."""
+    return _dump(_api().create_checklist(task_id, name=name))
+
+
+@mcp.tool()
+def update_checklist(
+    checklist_id: str, name: str | None = None, position: int | None = None
+) -> str:
+    """Rename a checklist or change its position."""
+    return _dump(_api().update_checklist(checklist_id, name=name, position=position))
+
+
+@mcp.tool()
+def delete_checklist(checklist_id: str) -> str:
+    """Delete a checklist."""
+    return _dump(_api().delete_checklist(checklist_id))
+
+
+@mcp.tool()
+def create_checklist_item(checklist_id: str, name: str, assignee: int | None = None) -> str:
+    """Add an item to a checklist."""
+    return _dump(_api().create_checklist_item(checklist_id, name=name, assignee=assignee))
+
+
+@mcp.tool()
+def update_checklist_item(
+    checklist_item_id: str,
+    name: str | None = None,
+    resolved: bool | None = None,
+    assignee: int | None = None,
+) -> str:
+    """Update a checklist item's name, resolution state, or assignee."""
+    return _dump(
+        _api().update_checklist_item(
+            checklist_item_id, name=name, resolved=resolved, assignee=assignee
+        )
+    )
+
+
+@mcp.tool()
+def delete_checklist_item(checklist_item_id: str) -> str:
+    """Delete a checklist item."""
+    return _dump(_api().delete_checklist_item(checklist_item_id))
+
+
+@mcp.tool()
+def list_list_comments(list_id: str) -> str:
+    """List all comments on a list (not on a specific task)."""
+    return _dump(_api().list_list_comments(list_id))
+
+
+@mcp.tool()
+def create_list_comment(list_id: str, text: str, notify_all: bool = False) -> str:
+    """Post a comment on a list; set notify_all to notify all list members."""
+    return _dump(_api().create_list_comment(list_id, text=text, notify_all=notify_all))
+
+
+@mcp.tool()
+def update_comment(comment_id: str, text: str) -> str:
+    """Edit the text of an existing comment."""
+    return _dump(_api().update_comment(comment_id, text=text))
+
+
+@mcp.tool()
+def delete_comment(comment_id: str) -> str:
+    """Delete a comment."""
+    return _dump(_api().delete_comment(comment_id))
+
+
+@mcp.tool()
+def remove_custom_field_value(task_id: str, field_id: str) -> str:
+    """Clear a custom field value on a task."""
+    return _dump(_api().remove_custom_field_value(task_id, field_id))
+
+
+@mcp.tool()
+def get_space_tags(space_id: str) -> str:
+    """List all tags defined in a space."""
+    return _dump(_api().get_space_tags(space_id))
+
+
+@mcp.tool()
+def create_space_tag(
+    space_id: str, name: str, bg_color: str | None = None, fg_color: str | None = None
+) -> str:
+    """Create a tag in a space. Colors are hex strings (e.g. '#ff0000')."""
+    return _dump(_api().create_space_tag(space_id, name=name, bg_color=bg_color, fg_color=fg_color))
+
+
+@mcp.tool()
+def update_space_tag(
+    space_id: str,
+    tag_name: str,
+    name: str | None = None,
+    bg_color: str | None = None,
+    fg_color: str | None = None,
+) -> str:
+    """Update a space tag's name or colors."""
+    return _dump(
+        _api().update_space_tag(space_id, tag_name, name=name, bg_color=bg_color, fg_color=fg_color)
+    )
+
+
+@mcp.tool()
+def delete_space_tag(space_id: str, tag_name: str) -> str:
+    """Delete a tag from a space."""
+    return _dump(_api().delete_space_tag(space_id, tag_name))
+
+
+@mcp.tool()
+def add_task_tag(task_id: str, tag_name: str) -> str:
+    """Add a tag to a task."""
+    return _dump(_api().add_task_tag(task_id, tag_name))
+
+
+@mcp.tool()
+def remove_task_tag(task_id: str, tag_name: str) -> str:
+    """Remove a tag from a task."""
+    return _dump(_api().remove_task_tag(task_id, tag_name))
+
+
+@mcp.tool()
+def list_goals(workspace_id: str | None = None, workspace_name: str | None = None) -> str:
+    """List all goals in a workspace."""
+    return _dump(_api().list_goals(workspace_id=workspace_id, workspace_name=workspace_name))
+
+
+@mcp.tool()
+def get_goal(goal_id: str) -> str:
+    """Get a single goal by id."""
+    return _dump(_api().get_goal(goal_id))
+
+
+@mcp.tool()
+def create_goal(
+    name: str,
+    due_date: int | None = None,
+    description: str | None = None,
+    color: str | None = None,
+    workspace_id: str | None = None,
+    workspace_name: str | None = None,
+) -> str:
+    """Create a goal in a workspace. due_date is Unix ms."""
+    return _dump(
+        _api().create_goal(
+            name=name,
+            due_date=due_date,
+            description=description,
+            color=color,
+            workspace_id=workspace_id,
+            workspace_name=workspace_name,
+        )
+    )
+
+
+@mcp.tool()
+def update_goal(
+    goal_id: str,
+    name: str | None = None,
+    due_date: int | None = None,
+    description: str | None = None,
+    color: str | None = None,
+) -> str:
+    """Update a goal. Pass only the fields to change."""
+    return _dump(
+        _api().update_goal(
+            goal_id, name=name, due_date=due_date, description=description, color=color
+        )
+    )
+
+
+@mcp.tool()
+def delete_goal(goal_id: str) -> str:
+    """Delete a goal."""
+    return _dump(_api().delete_goal(goal_id))
+
+
+@mcp.tool()
+def create_key_result(
+    goal_id: str,
+    name: str,
+    type: str,
+    steps_start: int,
+    steps_end: int,
+    unit: str,
+    task_ids: list[str] | None = None,
+    list_ids: list[str] | None = None,
+) -> str:
+    """Add a key result to a goal. type: number|currency|boolean|percentage|automatic."""
+    return _dump(
+        _api().create_key_result(
+            goal_id,
+            name=name,
+            type=type,
+            steps_start=steps_start,
+            steps_end=steps_end,
+            unit=unit,
+            task_ids=task_ids,
+            list_ids=list_ids,
+        )
+    )
+
+
+@mcp.tool()
+def update_key_result(key_result_id: str, steps_current: int, note: str | None = None) -> str:
+    """Update a key result's current progress."""
+    return _dump(_api().update_key_result(key_result_id, steps_current=steps_current, note=note))
+
+
+@mcp.tool()
+def delete_key_result(key_result_id: str) -> str:
+    """Delete a key result."""
+    return _dump(_api().delete_key_result(key_result_id))
+
+
+@mcp.tool()
+def list_workspace_views(workspace_id: str | None = None, workspace_name: str | None = None) -> str:
+    """List all views in a workspace."""
+    return _dump(
+        _api().list_workspace_views(workspace_id=workspace_id, workspace_name=workspace_name)
+    )
+
+
+@mcp.tool()
+def list_space_views(space_id: str) -> str:
+    """List all views in a space."""
+    return _dump(_api().list_space_views(space_id))
+
+
+@mcp.tool()
+def list_folder_views(folder_id: str) -> str:
+    """List all views in a folder."""
+    return _dump(_api().list_folder_views(folder_id))
+
+
+@mcp.tool()
+def list_list_views(list_id: str) -> str:
+    """List all views in a list."""
+    return _dump(_api().list_list_views(list_id))
+
+
+@mcp.tool()
+def get_view(view_id: str) -> str:
+    """Get a single view by id."""
+    return _dump(_api().get_view(view_id))
+
+
+@mcp.tool()
+def get_view_tasks(view_id: str, page: int = 0) -> str:
+    """Get tasks visible in a view. Returns one page; increment page to paginate."""
+    return _dump(_api().get_view_tasks(view_id, page=page))
+
+
+@mcp.tool()
+def create_view(list_id: str, name: str, type: str) -> str:
+    """Create a view on a list. type: list|board|calendar|table|gantt|activity|workload."""
+    return _dump(_api().create_view(list_id, name=name, type=type))
+
+
+@mcp.tool()
+def update_view(view_id: str, name: str, type: str) -> str:
+    """Update a view's name or type."""
+    return _dump(_api().update_view(view_id, name=name, type=type))
+
+
+@mcp.tool()
+def delete_view(view_id: str) -> str:
+    """Delete a view."""
+    return _dump(_api().delete_view(view_id))
+
+
+@mcp.tool()
+def list_webhooks(workspace_id: str | None = None, workspace_name: str | None = None) -> str:
+    """List all webhooks in a workspace."""
+    return _dump(_api().list_webhooks(workspace_id=workspace_id, workspace_name=workspace_name))
+
+
+@mcp.tool()
+def create_webhook(
+    endpoint: str,
+    events: list[str],
+    workspace_id: str | None = None,
+    workspace_name: str | None = None,
+) -> str:
+    """Register a webhook. events: list of event names, or ['*'] for all events."""
+    return _dump(
+        _api().create_webhook(
+            endpoint=endpoint,
+            events=events,
+            workspace_id=workspace_id,
+            workspace_name=workspace_name,
+        )
+    )
+
+
+@mcp.tool()
+def update_webhook(
+    webhook_id: str,
+    endpoint: str | None = None,
+    events: list[str] | None = None,
+    status: str | None = None,
+) -> str:
+    """Update a webhook's endpoint URL, subscribed events, or status ('active' | 'inactive')."""
+    return _dump(_api().update_webhook(webhook_id, endpoint=endpoint, events=events, status=status))
+
+
+@mcp.tool()
+def delete_webhook(webhook_id: str) -> str:
+    """Delete a webhook."""
+    return _dump(_api().delete_webhook(webhook_id))
+
+
+@mcp.tool()
+def get_time_entries(
+    workspace_id: str | None = None,
+    workspace_name: str | None = None,
+    start_date: int | None = None,
+    end_date: int | None = None,
+    assignee: int | None = None,
+    task_id: str | None = None,
+) -> str:
+    """Get time entries for a workspace. start_date/end_date are Unix ms timestamps."""
+    return _dump(
+        _api().get_time_entries(
+            workspace_id=workspace_id,
+            workspace_name=workspace_name,
+            start_date=start_date,
+            end_date=end_date,
+            assignee=assignee,
+            task_id=task_id,
+        )
+    )
+
+
+@mcp.tool()
+def get_running_time_entry(
+    workspace_id: str | None = None, workspace_name: str | None = None
+) -> str:
+    """Get the currently running time entry for the workspace, if any."""
+    return _dump(
+        _api().get_running_time_entry(workspace_id=workspace_id, workspace_name=workspace_name)
+    )
+
+
+@mcp.tool()
+def create_time_entry(
+    start: int,
+    duration: int,
+    workspace_id: str | None = None,
+    workspace_name: str | None = None,
+    task_id: str | None = None,
+    description: str | None = None,
+    billable: bool = False,
+) -> str:
+    """Manually log a time entry. start is Unix ms; duration is milliseconds."""
+    return _dump(
+        _api().create_time_entry(
+            start=start,
+            duration=duration,
+            workspace_id=workspace_id,
+            workspace_name=workspace_name,
+            task_id=task_id,
+            description=description,
+            billable=billable,
+        )
+    )
+
+
+@mcp.tool()
+def start_timer(
+    workspace_id: str | None = None,
+    workspace_name: str | None = None,
+    task_id: str | None = None,
+    description: str | None = None,
+    billable: bool = False,
+) -> str:
+    """Start a new timer. Stops any currently running timer."""
+    return _dump(
+        _api().start_timer(
+            workspace_id=workspace_id,
+            workspace_name=workspace_name,
+            task_id=task_id,
+            description=description,
+            billable=billable,
+        )
+    )
+
+
+@mcp.tool()
+def stop_timer(workspace_id: str | None = None, workspace_name: str | None = None) -> str:
+    """Stop the currently running timer."""
+    return _dump(_api().stop_timer(workspace_id=workspace_id, workspace_name=workspace_name))
+
+
+@mcp.tool()
+def update_time_entry(
+    time_entry_id: str,
+    workspace_id: str | None = None,
+    workspace_name: str | None = None,
+    start: int | None = None,
+    duration: int | None = None,
+    description: str | None = None,
+    billable: bool | None = None,
+) -> str:
+    """Update a time entry. start is Unix ms; duration is ms."""
+    return _dump(
+        _api().update_time_entry(
+            time_entry_id,
+            workspace_id=workspace_id,
+            workspace_name=workspace_name,
+            start=start,
+            duration=duration,
+            description=description,
+            billable=billable,
+        )
+    )
+
+
+@mcp.tool()
+def delete_time_entry(
+    time_entry_id: str, workspace_id: str | None = None, workspace_name: str | None = None
+) -> str:
+    """Delete a time entry."""
+    return _dump(
+        _api().delete_time_entry(
+            time_entry_id, workspace_id=workspace_id, workspace_name=workspace_name
+        )
+    )
+
+
 def main() -> None:
     """Run the MCP server over stdio transport."""
     mcp.run(transport="stdio")
