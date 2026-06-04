@@ -261,23 +261,23 @@ def test_create_checklist() -> None:
 
 def test_delete_checklist_item() -> None:
     def handler(req: httpx.Request) -> httpx.Response:
-        assert req.url.path == "/api/v2/checklist_item/ci1"
+        assert req.url.path == "/api/v2/checklist/cl1/checklist_item/ci1"
         assert req.method == "DELETE"
         return _json({})
 
-    assert make_client(handler).delete_checklist_item("ci1") == {"deleted": "ci1"}
+    assert make_client(handler).delete_checklist_item("cl1", "ci1") == {"deleted": "ci1"}
 
 
 def test_update_checklist_item_sends_resolved() -> None:
     captured: dict[str, Any] = {}
 
     def handler(req: httpx.Request) -> httpx.Response:
-        assert req.url.path == "/api/v2/checklist_item/ci1"
+        assert req.url.path == "/api/v2/checklist/cl1/checklist_item/ci1"
         assert req.method == "PUT"
         captured.update(json.loads(req.content))
         return _json({})
 
-    make_client(handler).update_checklist_item("ci1", resolved=True)
+    make_client(handler).update_checklist_item("cl1", "ci1", resolved=True)
     assert captured == {"resolved": True}
 
 

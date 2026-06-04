@@ -453,6 +453,7 @@ def create_checklist_item(checklist_id: str, name: str, assignee: int | None = N
 
 @mcp.tool()
 def update_checklist_item(
+    checklist_id: str,
     checklist_item_id: str,
     name: str | None = None,
     resolved: bool | None = None,
@@ -461,15 +462,15 @@ def update_checklist_item(
     """Update a checklist item's name, resolution state, or assignee."""
     return _dump(
         _api().update_checklist_item(
-            checklist_item_id, name=name, resolved=resolved, assignee=assignee
+            checklist_id, checklist_item_id, name=name, resolved=resolved, assignee=assignee
         )
     )
 
 
 @mcp.tool()
-def delete_checklist_item(checklist_item_id: str) -> str:
+def delete_checklist_item(checklist_id: str, checklist_item_id: str) -> str:
     """Delete a checklist item."""
-    return _dump(_api().delete_checklist_item(checklist_item_id))
+    return _dump(_api().delete_checklist_item(checklist_id, checklist_item_id))
 
 
 @mcp.tool()

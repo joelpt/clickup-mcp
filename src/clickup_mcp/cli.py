@@ -283,8 +283,6 @@ def main() -> None:
         sys.exit(1)
 
 
-
-
 @app.command("whoami")
 def cli_get_authorized_user() -> None:
     """Return the ClickUp user associated with the configured API key."""
@@ -569,6 +567,7 @@ def cli_create_checklist_item(
 
 @checklists_app.command("item-update")
 def cli_update_checklist_item(
+    checklist_id: str = typer.Argument(...),
     checklist_item_id: str = typer.Argument(...),
     name: str | None = typer.Option(None, "--name"),
     resolved: bool | None = typer.Option(None, "--resolved/--no-resolved"),
@@ -577,17 +576,18 @@ def cli_update_checklist_item(
     """Update a checklist item's name, resolution state, or assignee."""
     _out(
         ClickUpClient.from_env().update_checklist_item(
-            checklist_item_id, name=name, resolved=resolved, assignee=assignee
+            checklist_id, checklist_item_id, name=name, resolved=resolved, assignee=assignee
         )
     )
 
 
 @checklists_app.command("item-delete")
 def cli_delete_checklist_item(
+    checklist_id: str = typer.Argument(...),
     checklist_item_id: str = typer.Argument(...),
 ) -> None:
     """Delete a checklist item."""
-    _out(ClickUpClient.from_env().delete_checklist_item(checklist_item_id))
+    _out(ClickUpClient.from_env().delete_checklist_item(checklist_id, checklist_item_id))
 
 
 @comments_app.command("list-comments")

@@ -302,13 +302,16 @@ class ClickUpClient:
         if due_after is not None:
             params["due_date_gt"] = due_after
 
+        # Resolve team once so paginated loops don't make repeated GET /team calls.
+        team_path = (
+            f"/list/{list_id}/task"
+            if list_id
+            else f"/team/{self._resolve_team(workspace_id, workspace_name)}/task"
+        )
+
         def _page(p: int) -> list[JsonValue]:
             params["page"] = p
-            if list_id:
-                path = f"/list/{list_id}/task"
-            else:
-                path = f"/team/{self._resolve_team(workspace_id, workspace_name)}/task"
-            data = self._request("GET", path, params=params)
+            data = self._request("GET", team_path, params=params)
             tasks = data.get("tasks", []) if isinstance(data, dict) else []
             return tasks if isinstance(tasks, list) else []
 
@@ -737,6 +740,7 @@ class ClickUpClient:
 
     def update_checklist_item(
         self,
+        checklist_id: str,
         checklist_item_id: str,
         *,
         name: str | None = None,
@@ -751,11 +755,13 @@ class ClickUpClient:
             body["resolved"] = resolved
         if assignee is not None:
             body["assignee"] = assignee
-        return self._request("PUT", f"/checklist_item/{checklist_item_id}", json=body)
+        return self._request(
+            "PUT", f"/checklist/{checklist_id}/checklist_item/{checklist_item_id}", json=body
+        )
 
-    def delete_checklist_item(self, checklist_item_id: str) -> JsonValue:
+    def delete_checklist_item(self, checklist_id: str, checklist_item_id: str) -> JsonValue:
         """Delete a checklist item."""
-        self._request("DELETE", f"/checklist_item/{checklist_item_id}")
+        self._request("DELETE", f"/checklist/{checklist_id}/checklist_item/{checklist_item_id}")
         return {"deleted": checklist_item_id}
 
     def list_list_comments(self, list_id: str) -> list[JsonValue]:
