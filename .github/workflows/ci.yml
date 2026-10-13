@@ -22,4 +22,4 @@ jobs:
       - run: uv run ruff check .
       - run: uv run pytest -q
       - name: Tool registration
-        run: uv run python -c "import asyncio; from clickup_mcp import server; n=len(asyncio.run(server.mcp.list_tools())); print(n); assert n == 81"
+        run: uv run python -c "import asyncio; from clickup_mcp import server; n=len(asyncio.run(server.mcp.list_tools())); print(n); assert n == 90"

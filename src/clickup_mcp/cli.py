@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 import sys
+from typing import Annotated
 
 import typer
 
@@ -532,6 +533,126 @@ def cli_move_task(
 ) -> None:
     """Move a task to a different list."""
     _out(ClickUpClient.from_env().move_task(task_id, list_id=list_id))
+
+
+@tasks_app.command("merge")
+def cli_merge_tasks(
+    target_task_id: Annotated[str, typer.Argument()],
+    source_task_id: Annotated[list[str], typer.Option("--source-task-id")],
+) -> None:
+    """Merge source tasks into a target task (repeat --source-task-id)."""
+    _out(ClickUpClient.from_env().merge_tasks(target_task_id, source_task_id))
+
+
+@tasks_app.command("add-to-list")
+def cli_add_task_to_list(
+    task_id: str = typer.Argument(...),
+    list_id: str = typer.Option(..., "--list-id"),
+) -> None:
+    """Add a task to an additional list."""
+    _out(ClickUpClient.from_env().add_task_to_list(task_id, list_id))
+
+
+@tasks_app.command("remove-from-list")
+def cli_remove_task_from_list(
+    task_id: str = typer.Argument(...),
+    list_id: str = typer.Option(..., "--list-id"),
+) -> None:
+    """Remove a task from a non-home list."""
+    _out(ClickUpClient.from_env().remove_task_from_list(task_id, list_id))
+
+
+@comments_app.command("replies")
+def cli_list_comment_replies(comment_id: str = typer.Argument(...)) -> None:
+    """List the threaded replies to a comment."""
+    _out(ClickUpClient.from_env().list_comment_replies(comment_id))
+
+
+@comments_app.command("reply")
+def cli_create_comment_reply(
+    comment_id: str = typer.Argument(...),
+    text: str = typer.Option(..., "--text"),
+    notify_all: bool = typer.Option(False, "--notify-all/--no-notify-all"),
+    assignee: int | None = typer.Option(None, "--assignee"),
+) -> None:
+    """Reply to a comment in its thread."""
+    _out(
+        ClickUpClient.from_env().create_comment_reply(
+            comment_id, text, notify_all=notify_all, assignee=assignee
+        )
+    )
+
+
+@time_app.command("tags")
+def cli_list_time_entry_tags(
+    workspace_id: str | None = typer.Option(None, "--workspace-id"),
+    workspace_name: str | None = typer.Option(None, "--workspace-name"),
+) -> None:
+    """List all tags used on time entries."""
+    _out(
+        ClickUpClient.from_env().list_time_entry_tags(
+            workspace_id=workspace_id, workspace_name=workspace_name
+        )
+    )
+
+
+@time_app.command("tag-add")
+def cli_add_time_entry_tags(
+    time_entry_id: Annotated[list[str], typer.Option("--time-entry-id")],
+    tag: Annotated[list[str], typer.Option("--tag")],
+    tag_fg: str = typer.Option("#000000", "--tag-fg"),
+    tag_bg: str = typer.Option("#d3d3d3", "--tag-bg"),
+    workspace_id: str | None = typer.Option(None, "--workspace-id"),
+    workspace_name: str | None = typer.Option(None, "--workspace-name"),
+) -> None:
+    """Add tags to time entries (repeat --time-entry-id and --tag)."""
+    _out(
+        ClickUpClient.from_env().add_time_entry_tags(
+            time_entry_id,
+            tag,
+            tag_fg=tag_fg,
+            tag_bg=tag_bg,
+            workspace_id=workspace_id,
+            workspace_name=workspace_name,
+        )
+    )
+
+
+@time_app.command("tag-remove")
+def cli_remove_time_entry_tags(
+    time_entry_id: Annotated[list[str], typer.Option("--time-entry-id")],
+    tag: Annotated[list[str], typer.Option("--tag")],
+    workspace_id: str | None = typer.Option(None, "--workspace-id"),
+    workspace_name: str | None = typer.Option(None, "--workspace-name"),
+) -> None:
+    """Remove tags from time entries (repeat --time-entry-id and --tag)."""
+    _out(
+        ClickUpClient.from_env().remove_time_entry_tags(
+            time_entry_id, tag, workspace_id=workspace_id, workspace_name=workspace_name
+        )
+    )
+
+
+@time_app.command("tag-rename")
+def cli_rename_time_entry_tag(
+    name: str = typer.Argument(...),
+    new_name: str = typer.Option(..., "--new-name"),
+    tag_fg: str = typer.Option("#000000", "--tag-fg"),
+    tag_bg: str = typer.Option("#d3d3d3", "--tag-bg"),
+    workspace_id: str | None = typer.Option(None, "--workspace-id"),
+    workspace_name: str | None = typer.Option(None, "--workspace-name"),
+) -> None:
+    """Rename a time entry tag and set its colors."""
+    _out(
+        ClickUpClient.from_env().rename_time_entry_tag(
+            name,
+            new_name,
+            tag_fg=tag_fg,
+            tag_bg=tag_bg,
+            workspace_id=workspace_id,
+            workspace_name=workspace_name,
+        )
+    )
 
 
 @checklists_app.command("create")

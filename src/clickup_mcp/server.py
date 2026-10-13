@@ -197,6 +197,116 @@ def add_comment(task_id: str, text: str, notify_all: bool = False) -> str:
 
 
 @mcp.tool()
+def list_comment_replies(comment_id: str) -> str:
+    """List the threaded replies to a comment."""
+    return _dump(_api().list_comment_replies(comment_id))
+
+
+@mcp.tool()
+def create_comment_reply(
+    comment_id: str, text: str, notify_all: bool = False, assignee: int | None = None
+) -> str:
+    """Reply to a comment in its thread; assignee is an optional user id."""
+    return _dump(
+        _api().create_comment_reply(comment_id, text, notify_all=notify_all, assignee=assignee)
+    )
+
+
+@mcp.tool()
+def merge_tasks(target_task_id: str, source_task_ids: list[str]) -> str:
+    """Merge source tasks into a target task. Destructive: the source tasks are consumed."""
+    return _dump(_api().merge_tasks(target_task_id, source_task_ids))
+
+
+@mcp.tool()
+def add_task_to_list(task_id: str, list_id: str) -> str:
+    """Add a task to an additional list; it stays in its home list."""
+    return _dump(_api().add_task_to_list(task_id, list_id))
+
+
+@mcp.tool()
+def remove_task_from_list(task_id: str, list_id: str) -> str:
+    """Remove a task from a non-home list."""
+    return _dump(_api().remove_task_from_list(task_id, list_id))
+
+
+@mcp.tool()
+def list_time_entry_tags(
+    workspace_id: str | None = None, workspace_name: str | None = None
+) -> str:
+    """List all tags used on time entries in a workspace."""
+    return _dump(
+        _api().list_time_entry_tags(workspace_id=workspace_id, workspace_name=workspace_name)
+    )
+
+
+@mcp.tool()
+def add_time_entry_tags(
+    time_entry_ids: list[str],
+    tag_names: list[str],
+    tag_fg: str = "#000000",
+    tag_bg: str = "#d3d3d3",
+    workspace_id: str | None = None,
+    workspace_name: str | None = None,
+) -> str:
+    """Add tags to time entries; tag_fg/tag_bg are hex colors ClickUp requires."""
+    return _dump(
+        _api().add_time_entry_tags(
+            time_entry_ids,
+            tag_names,
+            tag_fg=tag_fg,
+            tag_bg=tag_bg,
+            workspace_id=workspace_id,
+            workspace_name=workspace_name,
+        )
+    )
+
+
+@mcp.tool()
+def remove_time_entry_tags(
+    time_entry_ids: list[str],
+    tag_names: list[str],
+    tag_fg: str = "#000000",
+    tag_bg: str = "#d3d3d3",
+    workspace_id: str | None = None,
+    workspace_name: str | None = None,
+) -> str:
+    """Remove tags from time entries."""
+    return _dump(
+        _api().remove_time_entry_tags(
+            time_entry_ids,
+            tag_names,
+            tag_fg=tag_fg,
+            tag_bg=tag_bg,
+            workspace_id=workspace_id,
+            workspace_name=workspace_name,
+        )
+    )
+
+
+@mcp.tool()
+def rename_time_entry_tag(
+    name: str,
+    new_name: str,
+    tag_fg: str = "#000000",
+    tag_bg: str = "#d3d3d3",
+    workspace_id: str | None = None,
+    workspace_name: str | None = None,
+) -> str:
+    """Rename a time entry tag and set its colors."""
+    return _dump(
+        _api().rename_time_entry_tag(
+            name,
+            new_name,
+            tag_fg=tag_fg,
+            tag_bg=tag_bg,
+            workspace_id=workspace_id,
+            workspace_name=workspace_name,
+        )
+    )
+
+
+@mcp.tool()
 def list_custom_fields(
     list_id: str | None = None,
     folder_id: str | None = None,

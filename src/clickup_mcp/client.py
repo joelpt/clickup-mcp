@@ -472,6 +472,124 @@ class ClickUpClient:
             json={"comment_text": text, "notify_all": notify_all},
         )
 
+    def list_comment_replies(self, comment_id: str) -> list[JsonValue]:
+        """List the threaded replies to a comment."""
+        result = self._field(self._request("GET", f"/comment/{comment_id}/reply"), "comments")
+        return result if isinstance(result, list) else []
+
+    def create_comment_reply(
+        self,
+        comment_id: str,
+        text: str,
+        *,
+        notify_all: bool = False,
+        assignee: int | None = None,
+    ) -> JsonValue:
+        """Reply to a comment in its thread.
+
+        Args:
+            comment_id: Parent comment id.
+            text: Reply body.
+            notify_all: Also notify the reply's creator when True.
+            assignee: Optional user id to assign the reply to.
+
+        Returns:
+            The created reply.
+        """
+        body: dict[str, object] = {"comment_text": text, "notify_all": notify_all}
+        if assignee is not None:
+            body["assignee"] = assignee
+        return self._request("POST", f"/comment/{comment_id}/reply", json=body)
+
+    def merge_tasks(self, target_task_id: str, source_task_ids: list[str]) -> JsonValue:
+        """Merge source tasks into a target task.
+
+        Args:
+            target_task_id: Task that survives the merge.
+            source_task_ids: Tasks merged into the target.
+
+        Returns:
+            The merged target task.
+        """
+        return self._request(
+            "POST",
+            f"/task/{target_task_id}/merge",
+            json={"source_task_ids": source_task_ids},
+        )
+
+    def add_task_to_list(self, task_id: str, list_id: str) -> JsonValue:
+        """Add a task to an additional list (it stays in its home list)."""
+        return self._request("POST", f"/list/{list_id}/task/{task_id}")
+
+    def remove_task_from_list(self, task_id: str, list_id: str) -> JsonValue:
+        """Remove a task from a non-home list."""
+        self._request("DELETE", f"/list/{list_id}/task/{task_id}")
+        return {"deleted": task_id}
+
+    def list_time_entry_tags(
+        self, *, workspace_id: str | None = None, workspace_name: str | None = None
+    ) -> list[JsonValue]:
+        """List all tags used on time entries in a workspace."""
+        team = self._resolve_team(workspace_id, workspace_name)
+        result = self._field(self._request("GET", f"/team/{team}/time_entries/tags"), "data")
+        return result if isinstance(result, list) else []
+
+    def add_time_entry_tags(
+        self,
+        time_entry_ids: list[str],
+        tag_names: list[str],
+        *,
+        tag_fg: str = "#000000",
+        tag_bg: str = "#d3d3d3",
+        workspace_id: str | None = None,
+        workspace_name: str | None = None,
+    ) -> JsonValue:
+        """Add tags to time entries; ClickUp requires a foreground and background color."""
+        team = self._resolve_team(workspace_id, workspace_name)
+        tags = [{"name": n, "tag_fg": tag_fg, "tag_bg": tag_bg} for n in tag_names]
+        return self._request(
+            "POST",
+            f"/team/{team}/time_entries/tags",
+            json={"time_entry_ids": time_entry_ids, "tags": tags},
+        )
+
+    def remove_time_entry_tags(
+        self,
+        time_entry_ids: list[str],
+        tag_names: list[str],
+        *,
+        tag_fg: str = "#000000",
+        tag_bg: str = "#d3d3d3",
+        workspace_id: str | None = None,
+        workspace_name: str | None = None,
+    ) -> JsonValue:
+        """Remove tags from time entries (the spec requires colors on the tag objects)."""
+        team = self._resolve_team(workspace_id, workspace_name)
+        tags = [{"name": n, "tag_fg": tag_fg, "tag_bg": tag_bg} for n in tag_names]
+        return self._request(
+            "DELETE",
+            f"/team/{team}/time_entries/tags",
+            json={"time_entry_ids": time_entry_ids, "tags": tags},
+        )
+
+    def rename_time_entry_tag(
+        self,
+        name: str,
+        new_name: str,
+        *,
+        tag_fg: str = "#000000",
+        tag_bg: str = "#d3d3d3",
+        workspace_id: str | None = None,
+        workspace_name: str | None = None,
+    ) -> JsonValue:
+        """Rename a time entry tag and set its colors."""
+        team = self._resolve_team(workspace_id, workspace_name)
+        return self._request(
+            "PUT",
+            f"/team/{team}/time_entries/tags",
+            json={"name": name, "new_name": new_name, "tag_fg": tag_fg, "tag_bg": tag_bg},
+        )
+
     def list_custom_fields(
         self,
         *,
