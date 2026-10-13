@@ -235,13 +235,26 @@ def test_move_task() -> None:
     captured: dict[str, Any] = {}
 
     def handler(req: httpx.Request) -> httpx.Response:
-        assert req.url.path == "/api/v2/task/t1/move"
-        assert req.method == "POST"
-        captured.update(json.loads(req.content))
+        captured["path"] = req.url.path
+        captured["method"] = req.method
         return _json({"id": "t1"})
 
     make_client(handler).move_task("t1", "l2")
-    assert captured == {"list_id": "l2"}
+    assert captured == {
+        "path": "/api/v3/workspaces/team1/tasks/t1/home_list/l2",
+        "method": "PUT",
+    }
+
+
+def test_move_task_explicit_workspace() -> None:
+    captured: dict[str, Any] = {}
+
+    def handler(req: httpx.Request) -> httpx.Response:
+        captured["path"] = req.url.path
+        return _json({"id": "t1"})
+
+    make_client(handler).move_task("t1", "l2", workspace_id="w9")
+    assert captured["path"] == "/api/v3/workspaces/w9/tasks/t1/home_list/l2"
 
 
 # ── Checklists ─────────────────────────────────────────────────────────────

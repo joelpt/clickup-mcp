@@ -724,11 +724,31 @@ class ClickUpClient:
         self._request("DELETE", f"/task/{task_id}/link/{links_to}")
         return {"deleted": task_id}
 
-    def move_task(self, task_id: str, list_id: str) -> JsonValue:
-        """Move a task to a different list."""
-        body: dict[str, object] = {}
-        body["list_id"] = list_id
-        return self._request("POST", f"/task/{task_id}/move", json=body)
+    def move_task(
+        self,
+        task_id: str,
+        list_id: str,
+        *,
+        workspace_id: str | None = None,
+        workspace_name: str | None = None,
+    ) -> JsonValue:
+        """Move a task to a different home list.
+
+        Args:
+            task_id: Task to move.
+            list_id: Destination list.
+            workspace_id: Explicit workspace id (defaults to the configured workspace).
+            workspace_name: Workspace name to resolve when no id is given.
+
+        Returns:
+            The API response body.
+        """
+        team = self._resolve_team(workspace_id, workspace_name)
+        # Only ClickUp's v3 API exposes a move; v2 has no equivalent endpoint.
+        v3_base = str(self._http.base_url).rstrip("/").removesuffix("/v2") + "/v3"
+        return self._request(
+            "PUT", f"{v3_base}/workspaces/{team}/tasks/{task_id}/home_list/{list_id}"
+        )
 
     def create_checklist(self, task_id: str, name: str) -> JsonValue:
         """Create a checklist on a task."""

@@ -427,9 +427,18 @@ def remove_task_link(task_id: str, links_to: str) -> str:
 
 
 @mcp.tool()
-def move_task(task_id: str, list_id: str) -> str:
-    """Move a task to a different list."""
-    return _dump(_api().move_task(task_id, list_id=list_id))
+def move_task(
+    task_id: str,
+    list_id: str,
+    workspace_id: str | None = None,
+    workspace_name: str | None = None,
+) -> str:
+    """Move a task to a different list (uses ClickUp's v3 API)."""
+    return _dump(
+        _api().move_task(
+            task_id, list_id=list_id, workspace_id=workspace_id, workspace_name=workspace_name
+        )
+    )
 
 
 @mcp.tool()
