@@ -7,6 +7,24 @@ third-party service, no license key.
 It exposes ClickUp as discrete MCP tools (`list_workspaces`, `search_tasks`,
 `create_task`, …) so an MCP host can grant or gate each operation individually.
 
+## Why this server
+
+ClickUp also hosts an official MCP server at `https://mcp.clickup.com/mcp`.
+It uses browser-based OAuth and, at the time of writing, ClickUp documents per-workspace daily call limits on lower plans and does not cover every API area (for example goals and webhooks).
+Check [ClickUp's current docs](https://clickup.com/blog/how-to-use-clickup-mcp-server/) before relying on either claim.
+
+This server is the alternative when you need:
+
+- **Headless use** — a personal API token works in bots, CI, and cron where an interactive OAuth sign-in does not.
+- **No MCP-side call cap** — only ClickUp's normal REST API rate limit applies.
+- **Broad coverage** — 81 tools generated from ClickUp's REST API, including goals, webhooks, views, custom fields, and time tracking.
+- **Per-tool gating** — one MCP tool per operation, so your host can allow reads and require confirmation for writes and deletes.
+
+It is an independent project and is not affiliated with ClickUp.
+
+> **Safety:** the token has the full access of its owner, and the server exposes delete operations.
+> Gate write and delete tools in your MCP host, and see [SECURITY.md](SECURITY.md).
+
 ## Install / run
 
 No PyPI release — run straight from GitHub with [uv](https://docs.astral.sh/uv/):

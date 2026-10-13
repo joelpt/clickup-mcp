@@ -2,7 +2,7 @@
 
 ClickUp MCP server + CLI: a direct ClickUp REST API v2 wrapper exposing `mcp__clickup__*` tools.
 This repo is the **engine**.
-It is consumed by two downstream projects that pin it by git ref, so a release here is rarely standalone — it usually fans out to coordinated edits elsewhere (see below).
+It is consumed by downstream projects that pin it by git ref, so a release here is rarely standalone — it usually fans out to coordinated edits elsewhere (see below).
 
 ## Versioning — CalVer, released in lockstep with the plugin
 
@@ -19,7 +19,12 @@ A change here that downstream consumers should pick up is a multi-repo operation
 After merging to `main`:
 
 1. Bump `pyproject.toml` `version`, then `git tag vYYYY.MM.DD.N`; push `main` + the tag.
-2. `~/code/claude-plugin-clickup` — repin `.mcp.json` to the new release's **commit SHA** (immutable; not the mutable `vYYYY.MM.DD.N` tag — a force-moved tag is a supply-chain regression) and bump the plugin's own `version` to match the CalVer, then its marketplace-sync flow (see that repo's `CLAUDE.md` and `~/.claude/rules/claude-plugins.md`).
-3. `~/code/cclaw` — bump `CLICKUP_MCP_REF` in `bot/Dockerfile` and the fallback default in `bot/entrypoint.sh`, then rebuild the bot image.
+2. `claude-plugin-clickup` (`joelpt/claude-plugin-clickup`) — repin `.mcp.json` to the new release's **commit SHA** (immutable; not the mutable `vYYYY.MM.DD.N` tag — a force-moved tag is a supply-chain regression) and bump the plugin's own `version` to match the CalVer (see that repo's `CLAUDE.md`).
+3. Any private downstream image that pins this server by ref needs the same bump.
 
 The downstream pins must always reference a tag/commit that is **already pushed**, or `uvx` resolution fails for every consumer.
+
+## 💡 LEARNINGS
+
+- Mocked tests only prove code matches your assumption: `move_task` shipped against a nonexistent v2 path until diffed against ClickUp's OpenAPI spec (`https://developer.clickup.com/openapi/clickup-api-v2-reference.json`; v3 at `.../ClickUp_PUBLIC_API_V3.yaml`, which is JSON despite the extension). Verify new endpoints against the spec.
+- `devtools/gen_api.py` is a one-shot inserter with an idempotency guard, not a spec syncer; re-running it is a no-op.
