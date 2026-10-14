@@ -18,7 +18,8 @@ Tag every release `vYYYY.MM.DD.N` (zero-padded month/day, `N` = that-day counter
 A change here that downstream consumers should pick up is a multi-repo operation.
 After merging to `main`:
 
-1. Bump `pyproject.toml` `version`, then `git tag vYYYY.MM.DD.N`; push `main` + the tag.
+1. Bump `pyproject.toml` `version` and refresh `uv.lock` (`uv lock`), then `git tag vYYYY.MM.DD.N`; push `main` + the tag.
+   Pushing a `v*` tag runs `.github/workflows/publish.yml`, which publishes `clickup-rest-mcp` to PyPI via trusted publishing (the `clickup-mcp` PyPI name belongs to someone else).
 2. `claude-plugin-clickup` (`joelpt/claude-plugin-clickup`) — repin `.mcp.json` to the new release's **commit SHA** (immutable; not the mutable `vYYYY.MM.DD.N` tag — a force-moved tag is a supply-chain regression) and bump the plugin's own `version` to match the CalVer (see that repo's `CLAUDE.md`).
 3. Any private downstream image that pins this server by ref needs the same bump.
 

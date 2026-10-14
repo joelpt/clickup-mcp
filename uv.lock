@@ -134,7 +134,7 @@ wheels = [
 ]
 
 [[package]]
-name = "clickup-mcp"
+name = "clickup-rest-mcp"
 version = "2026.10.13.1"
 source = { editable = "." }
 dependencies = [

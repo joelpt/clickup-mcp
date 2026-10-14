@@ -1,4 +1,4 @@
-# clickup-mcp
+# clickup-rest-mcp
 
 A [Model Context Protocol](https://modelcontextprotocol.io) server (and companion CLI)
 for [ClickUp](https://clickup.com), wrapping the ClickUp REST API v2 directly — no
@@ -27,17 +27,24 @@ It is an independent project and is not affiliated with ClickUp.
 
 ## Install / run
 
-No PyPI release — run straight from GitHub with [uv](https://docs.astral.sh/uv/):
+Published on PyPI as **`clickup-rest-mcp`**; run it with [uv](https://docs.astral.sh/uv/):
 
 ```bash
 # MCP server (stdio transport)
-uvx --from git+https://github.com/joelpt/clickup-mcp@<ref> clickup-mcp
+uvx clickup-rest-mcp
 
 # CLI (same operations, for humans/debugging)
-uvx --from git+https://github.com/joelpt/clickup-mcp@<ref> clickup workspaces
+uvx --from clickup-rest-mcp clickup workspaces
 ```
 
-Pin `<ref>` to a commit SHA (or a tag) for reproducible installs.
+> The shorter name `clickup-mcp` on PyPI is a different, unrelated project.
+> Use `clickup-rest-mcp`, or install from this repository.
+
+For a reproducible, tamper-resistant install, pin a full commit SHA from GitHub instead of a PyPI version:
+
+```bash
+uvx --from git+https://github.com/joelpt/clickup-mcp@<sha> clickup-mcp
+```
 
 ## Configuration
 
@@ -54,7 +61,7 @@ Pin `<ref>` to a commit SHA (or a tag) for reproducible installs.
 claude mcp add clickup \
   -e CLICKUP_API_KEY_FILE=/path/to/api-key \
   -e CLICKUP_TEAM_ID=1234567 \
-  -- uvx --from git+https://github.com/joelpt/clickup-mcp@<ref> clickup-mcp
+  -- uvx clickup-rest-mcp
 ```
 
 Tools then appear as `mcp__clickup__list_workspaces`, `mcp__clickup__create_task`, etc.

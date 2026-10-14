@@ -17,5 +17,6 @@ rather than a public issue. Expect an acknowledgement within a few days.
   confirmation for write and delete tools, or allow read-only tools only.
 - `create_webhook` registers an outbound endpoint that receives workspace event data. Only
   point it at endpoints you control.
-- Pin installs to a release tag or, better, a full commit SHA: `uvx --from
-  git+https://github.com/joelpt/clickup-mcp@<sha> clickup-mcp`.
+- Install `clickup-rest-mcp` from PyPI (the similarly named `clickup-mcp` is an unrelated project),
+  or pin a full commit SHA: `uvx --from git+https://github.com/joelpt/clickup-mcp@<sha>
+  clickup-mcp`.
