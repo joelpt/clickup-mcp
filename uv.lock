@@ -135,7 +135,7 @@ wheels = [
 
 [[package]]
 name = "clickup-rest-mcp"
-version = "2026.10.13.1"
+version = "2026.10.15.1"
 source = { editable = "." }
 dependencies = [
     { name = "httpx" },
